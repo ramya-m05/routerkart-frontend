@@ -77,7 +77,7 @@ function AdminDashboard() {
 
   const fetchCustomers = async () => {
     try {
-      const res = await API.get("/auth/users");
+      const res = await API.get("/users");
       setCustomers(Array.isArray(res.data) ? res.data : []);
     } catch { toast.error("Failed to fetch customers"); }
   };
