@@ -35,24 +35,28 @@ function AdminDashboard() {
   const [editCatVal,   setEditCatVal]  = useState("");
   const [deleteCatIdx, setDeleteCatIdx]= useState(null);
 
-  /* ── images: { file, preview, existing } ── */
+  /* ── images ── */
   const [imageSlots, setImageSlots] = useState([]);
   const MAX_IMAGES   = 6;
   const fileInputRef = useRef(null);
+
+  /* ── customers ── */
+  const [customers,      setCustomers]      = useState([]);
+  const [showCustomers,  setShowCustomers]  = useState(false);
+  const [customerSearch, setCustomerSearch] = useState("");
 
   /* ── ui ── */
   const [loading,     setLoading]    = useState(true);
   const [formLoading, setFormLoading]= useState(false);
   const [deleteId,    setDeleteId]   = useState(null);
   const [searchProd,  setSearchProd] = useState("");
-  const [stats, setStats] = useState({ totalProducts: 0, lowStock: 0 });
-  const [sales, setSales] = useState({ revenue: 0, avgPrice: 0 });
+  const [stats,       setStats]      = useState({ totalProducts: 0, lowStock: 0 });
+  const [sales,       setSales]      = useState({ revenue: 0, avgPrice: 0 });
 
   if (!localStorage.getItem("token")) { window.location.href = "/"; }
 
   useEffect(() => { saveCats(categories); }, [categories]);
 
-  /* ── fetch products ── */
   const fetchProducts = async () => {
     try {
       const res = await API.get("/products");
@@ -70,6 +74,17 @@ function AdminDashboard() {
     finally  { setLoading(false); }
   };
   useEffect(() => { fetchProducts(); }, []);
+
+  const fetchCustomers = async () => {
+    try {
+      const res = await API.get("/auth/users");
+      setCustomers(Array.isArray(res.data) ? res.data : []);
+    } catch { toast.error("Failed to fetch customers"); }
+  };
+
+  useEffect(() => {
+    if (showCustomers && customers.length === 0) fetchCustomers();
+  }, [showCustomers]);
 
   const calcStats = (p) => {
     let lStock = 0;
@@ -93,12 +108,10 @@ function AdminDashboard() {
   };
 
   const handleSaveEditCat = () => {
-    const val     = editCatVal.trim();
+    const val = editCatVal.trim();
     const oldName = categories[editCatIdx];
     if (!val) { toast.error("Name cannot be empty"); return; }
-    if (val.toLowerCase() !== oldName.toLowerCase() && categories.map(c => c.toLowerCase()).includes(val.toLowerCase())) {
-      toast.error("That name already exists"); return;
-    }
+    if (val.toLowerCase() !== oldName.toLowerCase() && categories.map(c => c.toLowerCase()).includes(val.toLowerCase())) { toast.error("That name already exists"); return; }
     setCategories(prev => prev.map((c, i) => i === editCatIdx ? val : c));
     if (category === oldName) setCategory(val);
     setEditCatIdx(null); setEditCatVal("");
@@ -117,14 +130,11 @@ function AdminDashboard() {
 
   /* ── images ── */
   const handleAddImages = (files) => {
-    const arr       = Array.from(files);
+    const arr = Array.from(files);
     const remaining = MAX_IMAGES - imageSlots.length;
     if (remaining <= 0) { toast.error(`Max ${MAX_IMAGES} images allowed`); return; }
     const toAdd = arr.slice(0, remaining);
-    setImageSlots(prev => [
-      ...prev,
-      ...toAdd.map(file => ({ file, preview: URL.createObjectURL(file), existing: false }))
-    ]);
+    setImageSlots(prev => [...prev, ...toAdd.map(file => ({ file, preview: URL.createObjectURL(file), existing: false }))]);
     if (arr.length > remaining) toast(`Only first ${remaining} added — max ${MAX_IMAGES}`);
   };
 
@@ -147,7 +157,6 @@ function AdminDashboard() {
     });
   };
 
-  /* ── validation ── */
   const validate = () => {
     if (!name.trim())                             { toast.error("Product name is required");          return false; }
     if (!category)                                { toast.error("Please select a category");          return false; }
@@ -158,51 +167,32 @@ function AdminDashboard() {
     return true;
   };
 
-  /* ── FormData: new image files go to backend → Cloudinary; existing URLs are preserved ── */
   const buildForm = () => {
     const fd = new FormData();
-    fd.append("name",         name);
-    fd.append("category",     category);
-    fd.append("description",  description);
-    fd.append("price",        price);
-    fd.append("stock",        stock);
-    fd.append("deliveryDays", deliveryDays);
+    fd.append("name", name); fd.append("category", category); fd.append("description", description);
+    fd.append("price", price); fd.append("stock", stock); fd.append("deliveryDays", deliveryDays);
     if (originalPrice) fd.append("originalPrice", originalPrice);
     if (brand) fd.append("brand", brand);
     if (sku)   fd.append("sku",   sku);
-    // New files — backend will upload these to Cloudinary
     imageSlots.filter(s => !s.existing && s.file).forEach(s => fd.append("images", s.file));
-    // Existing Cloudinary URLs — backend will keep these
-    fd.append("existingImages", JSON.stringify(
-      imageSlots.filter(s => s.existing).map(s => s.preview)
-    ));
+    fd.append("existingImages", JSON.stringify(imageSlots.filter(s => s.existing).map(s => s.preview)));
     return fd;
   };
 
   const addProduct = async () => {
     if (!validate()) return;
     setFormLoading(true);
-    try {
-      await API.post("/products", buildForm());
-      toast.success("Product added ✅");
-      fetchProducts();
-      resetForm();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to add product");
-    } finally { setFormLoading(false); }
+    try { await API.post("/products", buildForm()); toast.success("Product added ✅"); fetchProducts(); resetForm(); }
+    catch (err) { toast.error(err.response?.data?.message || "Failed to add product"); }
+    finally { setFormLoading(false); }
   };
 
   const updateProduct = async (id) => {
     if (!validate()) return;
     setFormLoading(true);
-    try {
-      await API.put(`/products/${id}`, buildForm());
-      toast.success("Product updated ✅");
-      fetchProducts();
-      resetForm();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update");
-    } finally { setFormLoading(false); }
+    try { await API.put(`/products/${id}`, buildForm()); toast.success("Product updated ✅"); fetchProducts(); resetForm(); }
+    catch (err) { toast.error(err.response?.data?.message || "Failed to update"); }
+    finally { setFormLoading(false); }
   };
 
   const deleteProduct = async (id) => {
@@ -211,19 +201,15 @@ function AdminDashboard() {
   };
 
   const startEdit = (p) => {
-  setEditingId(p._id);
-  setName(p.name || ""); setCategory(p.category || ""); setDescription(p.description || "");
-  setPrice(p.price || ""); setStock(p.stock || ""); setOriginalPrice(p.originalPrice || "");
-  setDeliveryDays(p.deliveryDays || "5"); setBrand(p.brand || ""); setSku(p.sku || "");
-
-  // ✅ FIX: collect from images[] array AND legacy image string, deduplicate, filter empties
-  const fromArray  = Array.isArray(p.images) ? p.images : [];
-  const fromSingle = p.image && !fromArray.includes(p.image) ? [p.image] : [];
-  const imgs       = [...fromArray, ...fromSingle].filter(Boolean);
-
-  setImageSlots(imgs.map(url => ({ file: null, preview: url, existing: true })));
-  window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-};
+    setEditingId(p._id);
+    setName(p.name || ""); setCategory(p.category || ""); setDescription(p.description || "");
+    setPrice(p.price || ""); setStock(p.stock || ""); setOriginalPrice(p.originalPrice || "");
+    setDeliveryDays(p.deliveryDays || "5"); setBrand(p.brand || ""); setSku(p.sku || "");
+    const fromArray  = Array.isArray(p.images) ? p.images : [];
+    const fromSingle = p.image && !fromArray.includes(p.image) ? [p.image] : [];
+    setImageSlots([...fromArray, ...fromSingle].filter(Boolean).map(url => ({ file: null, preview: url, existing: true })));
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  };
 
   const resetForm = () => {
     setName(""); setDescription(""); setPrice(""); setOriginalPrice("");
@@ -237,8 +223,16 @@ function AdminDashboard() {
     p.category?.toLowerCase().includes(searchProd.toLowerCase())
   );
 
+  const filteredCustomers = customers.filter(c =>
+    c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    c.email?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    c.phone?.includes(customerSearch)
+  );
+
   const catColor = (cat) => CAT_COLORS[categories.indexOf(cat) % CAT_COLORS.length] || "#f0f0f0";
   const discP    = (orig, sell) => orig > sell ? Math.round(((orig - sell) / orig) * 100) : 0;
+  const formatDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+  const initials = (n) => n?.trim().split(" ").map(x => x[0]).join("").toUpperCase().slice(0, 2) || "?";
 
   const inp = { width: "100%", padding: "11px 14px", border: "2px solid #e5e5e5", borderRadius: "8px", fontSize: "14px", color: "#111", background: "white", outline: "none", transition: "border-color 0.15s", boxSizing: "border-box", fontFamily: "'DM Sans', sans-serif" };
   const lbl = { display: "block", fontSize: "11px", fontWeight: "800", color: "#555", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "7px" };
@@ -260,6 +254,10 @@ function AdminDashboard() {
             <button onClick={() => setShowCatPanel(v => !v)}
               style={{ padding: "10px 16px", background: showCatPanel ? "#FEE12B" : "rgba(255,255,255,0.08)", color: showCatPanel ? "#111" : "white", border: `1px solid ${showCatPanel ? "#FEE12B" : "rgba(255,255,255,0.15)"}`, borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif" }}>
               🗂️ Categories {showCatPanel ? "▲" : "▼"}
+            </button>
+            <button onClick={() => { setShowCustomers(v => !v); }}
+              style={{ padding: "10px 16px", background: showCustomers ? "#FEE12B" : "rgba(255,255,255,0.08)", color: showCustomers ? "#111" : "white", border: `1px solid ${showCustomers ? "#FEE12B" : "rgba(255,255,255,0.15)"}`, borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif" }}>
+              👥 Customers {showCustomers ? "▲" : "▼"}
             </button>
             <button onClick={() => navigate("/admin/orders")}
               style={{ padding: "10px 16px", background: "rgba(255,255,255,0.08)", color: "white", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif" }}>
@@ -284,12 +282,8 @@ function AdminDashboard() {
             </div>
             <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap" }}>
               <input placeholder="New category name" value={newCatName} onChange={e => setNewCatName(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && handleAddCat()}
-                style={{ ...inp, flex: 1, minWidth: "220px" }} onFocus={fo} onBlur={bl} />
-              <button onClick={handleAddCat}
-                style={{ padding: "11px 20px", background: "#FEE12B", color: "#111", border: "none", borderRadius: "8px", fontWeight: "800", fontSize: "14px", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'DM Sans', sans-serif" }}>
-                + Add
-              </button>
+                onKeyDown={e => e.key === "Enter" && handleAddCat()} style={{ ...inp, flex: 1, minWidth: "220px" }} onFocus={fo} onBlur={bl} />
+              <button onClick={handleAddCat} style={{ padding: "11px 20px", background: "#FEE12B", color: "#111", border: "none", borderRadius: "8px", fontWeight: "800", fontSize: "14px", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'DM Sans', sans-serif" }}>+ Add</button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fill, minmax(200px, 1fr))", gap: "10px" }}>
               {categories.map((cat, idx) => {
@@ -316,15 +310,92 @@ function AdminDashboard() {
                       </div>
                     ) : (
                       <div style={{ display: "flex", gap: "5px" }}>
-                        <button onClick={() => { setEditCatIdx(idx); setEditCatVal(cat); }}
-                          style={{ padding: "4px 8px", background: "#f0f0f0", border: "none", borderRadius: "5px", fontSize: "12px", cursor: "pointer" }}>✏️</button>
-                        <button onClick={() => setDeleteCatIdx(idx)} disabled={inUse > 0}
-                          style={{ padding: "4px 8px", background: inUse > 0 ? "#fafafa" : "#fff0f0", border: "none", borderRadius: "5px", fontSize: "12px", cursor: inUse > 0 ? "not-allowed" : "pointer", opacity: inUse > 0 ? 0.4 : 1 }}>🗑️</button>
+                        <button onClick={() => { setEditCatIdx(idx); setEditCatVal(cat); }} style={{ padding: "4px 8px", background: "#f0f0f0", border: "none", borderRadius: "5px", fontSize: "12px", cursor: "pointer" }}>✏️</button>
+                        <button onClick={() => setDeleteCatIdx(idx)} disabled={inUse > 0} style={{ padding: "4px 8px", background: inUse > 0 ? "#fafafa" : "#fff0f0", border: "none", borderRadius: "5px", fontSize: "12px", cursor: inUse > 0 ? "not-allowed" : "pointer", opacity: inUse > 0 ? 0.4 : 1 }}>🗑️</button>
                       </div>
                     )}
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* ── CUSTOMERS PANEL ── */}
+        {showCustomers && (
+          <div style={{ background: "white", borderRadius: "12px", padding: isMobile ? "18px 14px" : "24px", border: "2px solid #FEE12B", marginBottom: "20px", boxShadow: "0 4px 20px rgba(254,225,43,0.15)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px", flexWrap: "wrap", gap: "10px" }}>
+              <div>
+                <h3 style={{ fontWeight: "900", fontSize: "16px", color: "#111", margin: "0 0 2px" }}>👥 Customer Accounts</h3>
+                <p style={{ fontSize: "12px", color: "#aaa", margin: 0, fontWeight: "600" }}>{customers.length} registered customer{customers.length !== 1 ? "s" : ""}</p>
+              </div>
+              <button onClick={fetchCustomers} style={{ padding: "8px 14px", background: "#f7f7f5", border: "1px solid #eee", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+                🔄 Refresh
+              </button>
+            </div>
+
+            {/* Customer stats */}
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, 1fr)", gap: "12px", marginBottom: "18px" }}>
+              {[
+                { label: "Total Customers", value: customers.length,                                                       icon: "👥", color: "#2563eb" },
+                { label: "With Phone",       value: customers.filter(c => c.phone).length,                                  icon: "📱", color: "#16a34a" },
+                { label: "This Month",       value: customers.filter(c => new Date(c.createdAt).getMonth() === new Date().getMonth()).length, icon: "🆕", color: "#7c3aed" },
+              ].map((s, i) => (
+                <div key={i} style={{ background: "#F7F7F5", borderRadius: "10px", padding: "14px 16px", display: "flex", alignItems: "center", gap: "12px" }}>
+                  <span style={{ fontSize: "22px" }}>{s.icon}</span>
+                  <div>
+                    <p style={{ fontWeight: "900", fontSize: "20px", margin: "0 0 1px", color: s.color }}>{s.value}</p>
+                    <p style={{ fontSize: "11px", color: "#aaa", margin: 0, fontWeight: "600" }}>{s.label}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Search */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", border: "1px solid #eee", borderRadius: "8px", padding: "0 14px", background: "#f9f9f9", marginBottom: "14px" }}>
+              <span>🔍</span>
+              <input placeholder="Search by name, email or phone..."
+                value={customerSearch} onChange={e => setCustomerSearch(e.target.value)}
+                style={{ border: "none", outline: "none", padding: "10px 0", fontSize: "13px", background: "transparent", flex: 1, fontFamily: "'DM Sans', sans-serif" }} />
+            </div>
+
+            {/* Customer table */}
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "560px" }}>
+                <thead>
+                  <tr style={{ background: "#F7F7F5", borderBottom: "1px solid #eee" }}>
+                    {["Customer", "Email", "Phone", "Joined", "Orders"].map(col => (
+                      <th key={col} style={{ padding: "10px 14px", textAlign: "left", fontSize: "10px", fontWeight: "800", letterSpacing: "1.2px", textTransform: "uppercase", color: "#aaa" }}>{col}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCustomers.length === 0 ? (
+                    <tr><td colSpan={5} style={{ textAlign: "center", padding: "32px", color: "#aaa", fontSize: "14px" }}>No customers found</td></tr>
+                  ) : filteredCustomers.map(c => (
+                    <tr key={c._id} style={{ borderBottom: "1px solid #f5f5f5" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "#FAFAF8"}
+                      onMouseLeave={e => e.currentTarget.style.background = "white"}>
+                      <td style={{ padding: "12px 14px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: "#FEE12B", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: "12px", color: "#111", flexShrink: 0 }}>
+                            {initials(c.name)}
+                          </div>
+                          <span style={{ fontWeight: "700", fontSize: "13px", color: "#111" }}>{c.name}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "12px 14px", fontSize: "13px", color: "#555" }}>{c.email}</td>
+                      <td style={{ padding: "12px 14px", fontSize: "13px", color: c.phone ? "#111" : "#ccc", fontWeight: c.phone ? "600" : "400" }}>
+                        {c.phone ? `+91 ${c.phone}` : "—"}
+                      </td>
+                      <td style={{ padding: "12px 14px", fontSize: "12px", color: "#888" }}>{formatDate(c.createdAt)}</td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <span style={{ fontWeight: "800", fontSize: "13px", color: "#2563eb" }}>{c.orderCount || 0}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
@@ -389,13 +460,9 @@ function AdminDashboard() {
                       <td style={{ padding: "12px 14px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           <div style={{ position: "relative", flexShrink: 0 }}>
-                            {thumb
-                              ? <img src={thumb} alt={p.name} style={{ width: "42px", height: "42px", objectFit: "cover", borderRadius: "8px", border: "1px solid #f0f0f0" }} />
-                              : <div style={{ width: "42px", height: "42px", background: "#f5f5f0", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>📦</div>
-                            }
-                            {imgCount > 1 && (
-                              <span style={{ position: "absolute", bottom: "-4px", right: "-4px", background: "#FEE12B", color: "#111", fontSize: "9px", fontWeight: "900", padding: "1px 5px", borderRadius: "8px", border: "1px solid white" }}>+{imgCount - 1}</span>
-                            )}
+                            {thumb ? <img src={thumb} alt={p.name} style={{ width: "42px", height: "42px", objectFit: "cover", borderRadius: "8px", border: "1px solid #f0f0f0" }} />
+                              : <div style={{ width: "42px", height: "42px", background: "#f5f5f0", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>📦</div>}
+                            {imgCount > 1 && <span style={{ position: "absolute", bottom: "-4px", right: "-4px", background: "#FEE12B", color: "#111", fontSize: "9px", fontWeight: "900", padding: "1px 5px", borderRadius: "8px", border: "1px solid white" }}>+{imgCount - 1}</span>}
                           </div>
                           <div style={{ minWidth: 0 }}>
                             <p style={{ fontWeight: "700", fontSize: "13px", color: "#111", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "150px" }}>{p.name}</p>
@@ -440,17 +507,11 @@ function AdminDashboard() {
         {/* ADD / EDIT FORM */}
         <div style={{ background: "white", borderRadius: "12px", padding: isMobile ? "18px 14px" : "28px", border: "1px solid #ececec", boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", paddingBottom: "14px", borderBottom: "2px solid #111" }}>
-            <h3 style={{ fontWeight: "900", fontSize: "16px", color: "#111", margin: 0 }}>
-              {editingId ? "✏️ Edit Product" : "➕ Add New Product"}
-            </h3>
-            {editingId && (
-              <button onClick={resetForm} style={{ padding: "7px 14px", background: "transparent", border: "2px solid #eee", borderRadius: "8px", fontWeight: "700", fontSize: "12px", cursor: "pointer", color: "#666", fontFamily: "'DM Sans', sans-serif" }}>✕ Cancel</button>
-            )}
+            <h3 style={{ fontWeight: "900", fontSize: "16px", color: "#111", margin: 0 }}>{editingId ? "✏️ Edit Product" : "➕ Add New Product"}</h3>
+            {editingId && <button onClick={resetForm} style={{ padding: "7px 14px", background: "transparent", border: "2px solid #eee", borderRadius: "8px", fontWeight: "700", fontSize: "12px", cursor: "pointer", color: "#666", fontFamily: "'DM Sans', sans-serif" }}>✕ Cancel</button>}
           </div>
 
           <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: "24px" }}>
-
-            {/* TEXT FIELDS */}
             <div style={{ flex: 1 }}>
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
                 <div>
@@ -462,14 +523,7 @@ function AdminDashboard() {
                   <select style={inp} value={category} onChange={e => {
                     if (e.target.value === "__new__") {
                       const n = window.prompt("Enter new category name:");
-                      if (n?.trim()) {
-                        const val = n.trim();
-                        if (!categories.map(c => c.toLowerCase()).includes(val.toLowerCase())) {
-                          setCategories(prev => { const u = [...prev, val]; saveCats(u); return u; });
-                          toast.success(`"${val}" added`);
-                        }
-                        setCategory(val);
-                      }
+                      if (n?.trim()) { const val = n.trim(); if (!categories.map(c => c.toLowerCase()).includes(val.toLowerCase())) { setCategories(prev => { const u = [...prev, val]; saveCats(u); return u; }); toast.success(`"${val}" added`); } setCategory(val); }
                     } else { setCategory(e.target.value); }
                   }}>
                     <option value="">Select category</option>
@@ -487,17 +541,13 @@ function AdminDashboard() {
                 </div>
                 <div>
                   <label style={lbl}>Original / MRP (₹)</label>
-                  <input
-                    style={{ ...inp, borderColor: originalPrice && +originalPrice < +price ? "#e53e3e" : "#e5e5e5" }}
+                  <input style={{ ...inp, borderColor: originalPrice && +originalPrice < +price ? "#e53e3e" : "#e5e5e5" }}
                     placeholder="Leave blank if no discount" type="number" value={originalPrice}
                     onChange={e => setOriginalPrice(e.target.value)}
                     onFocus={e => e.target.style.borderColor = "#FEE12B"}
-                    onBlur={e => e.target.style.borderColor = originalPrice && +originalPrice < +price ? "#e53e3e" : "#e5e5e5"}
-                  />
+                    onBlur={e => e.target.style.borderColor = originalPrice && +originalPrice < +price ? "#e53e3e" : "#e5e5e5"} />
                   {originalPrice && price && +originalPrice > +price && (
-                    <p style={{ fontSize: "11px", color: "#16a34a", fontWeight: "700", margin: "4px 0 0" }}>
-                      ₹<s>{(+originalPrice).toLocaleString()}</s> → ₹{(+price).toLocaleString()} ({discP(+originalPrice, +price)}% OFF)
-                    </p>
+                    <p style={{ fontSize: "11px", color: "#16a34a", fontWeight: "700", margin: "4px 0 0" }}>₹<s>{(+originalPrice).toLocaleString()}</s> → ₹{(+price).toLocaleString()} ({discP(+originalPrice, +price)}% OFF)</p>
                   )}
                 </div>
               </div>
@@ -513,11 +563,7 @@ function AdminDashboard() {
                     <input style={{ ...inp, flex: 1 }} placeholder="5" type="number" min="1" max="30" value={deliveryDays} onChange={e => setDeliveryDays(e.target.value)} onFocus={fo} onBlur={bl} />
                     <span style={{ fontSize: "12px", color: "#888", fontWeight: "600", whiteSpace: "nowrap" }}>days</span>
                   </div>
-                  {deliveryDays && (
-                    <p style={{ fontSize: "11px", color: "#2563eb", fontWeight: "600", margin: "4px 0 0" }}>
-                      🚚 Delivers by {(() => { const d = new Date(); d.setDate(d.getDate() + +deliveryDays); return d.toLocaleDateString("en-IN", { day: "numeric", month: "long" }); })()}
-                    </p>
-                  )}
+                  {deliveryDays && <p style={{ fontSize: "11px", color: "#2563eb", fontWeight: "600", margin: "4px 0 0" }}>🚚 Delivers by {(() => { const d = new Date(); d.setDate(d.getDate() + +deliveryDays); return d.toLocaleDateString("en-IN", { day: "numeric", month: "long" }); })()}</p>}
                 </div>
               </div>
 
@@ -538,81 +584,52 @@ function AdminDashboard() {
               </div>
             </div>
 
-            {/* IMAGE UPLOAD — files sent to backend → uploaded to Cloudinary */}
+            {/* IMAGE UPLOAD */}
             <div style={{ width: isMobile ? "100%" : "280px", flexShrink: 0 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
                 <label style={lbl}>Product Photos</label>
-                <span style={{ fontSize: "11px", color: imageSlots.length >= MAX_IMAGES ? "#e53e3e" : "#aaa", fontWeight: "600" }}>
-                  {imageSlots.length}/{MAX_IMAGES}
-                </span>
+                <span style={{ fontSize: "11px", color: imageSlots.length >= MAX_IMAGES ? "#e53e3e" : "#aaa", fontWeight: "600" }}>{imageSlots.length}/{MAX_IMAGES}</span>
               </div>
-
-              <div style={{ background: "#F0FDF4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "8px 12px", marginBottom: "10px", fontSize: "11px", color: "#16a34a", fontWeight: "600" }}>
-                ☁️ Images upload to Cloudinary automatically
-              </div>
-
+              <div style={{ background: "#F0FDF4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "8px 12px", marginBottom: "10px", fontSize: "11px", color: "#16a34a", fontWeight: "600" }}>☁️ Images upload to Cloudinary automatically</div>
               {imageSlots.length < MAX_IMAGES && (
-                <label
-                  style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "2px dashed #FEE12B", borderRadius: "10px", padding: "18px 12px", cursor: "pointer", background: "#FFFDF0", marginBottom: "12px", transition: "background 0.15s" }}
-                  onMouseEnter={e => e.currentTarget.style.background = "#FFF8D0"}
-                  onMouseLeave={e => e.currentTarget.style.background = "#FFFDF0"}
-                >
+                <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "2px dashed #FEE12B", borderRadius: "10px", padding: "18px 12px", cursor: "pointer", background: "#FFFDF0", marginBottom: "12px", transition: "background 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.background = "#FFF8D0"} onMouseLeave={e => e.currentTarget.style.background = "#FFFDF0"}>
                   <span style={{ fontSize: "28px", marginBottom: "6px" }}>📸</span>
                   <p style={{ fontSize: "12px", fontWeight: "700", color: "#888", margin: 0 }}>Click to add photos</p>
                   <p style={{ fontSize: "10px", color: "#ccc", margin: "4px 0 0" }}>Up to {MAX_IMAGES - imageSlots.length} more · JPG, PNG, WEBP</p>
-                  <input ref={fileInputRef} type="file" accept="image/*" multiple style={{ display: "none" }}
-                    onChange={e => { handleAddImages(e.target.files); e.target.value = ""; }} />
+                  <input ref={fileInputRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={e => { handleAddImages(e.target.files); e.target.value = ""; }} />
                 </label>
               )}
-
               {imageSlots.length > 0 && (
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                   {imageSlots.map((slot, idx) => (
                     <div key={idx} style={{ position: "relative", borderRadius: "8px", overflow: "hidden", border: idx === 0 ? "3px solid #FEE12B" : "2px solid #eee", aspectRatio: "1", background: "#f5f5f0" }}>
                       <img src={slot.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                      {idx === 0 && (
-                        <div style={{ position: "absolute", top: "5px", left: "5px", background: "#FEE12B", color: "#111", fontSize: "9px", fontWeight: "900", padding: "2px 6px", borderRadius: "4px" }}>COVER</div>
-                      )}
-                      {slot.existing && (
-                        <div style={{ position: "absolute", top: "5px", right: "5px", background: "#22c55e", color: "white", fontSize: "8px", fontWeight: "900", padding: "2px 5px", borderRadius: "4px" }}>☁️</div>
-                      )}
+                      {idx === 0 && <div style={{ position: "absolute", top: "5px", left: "5px", background: "#FEE12B", color: "#111", fontSize: "9px", fontWeight: "900", padding: "2px 6px", borderRadius: "4px" }}>COVER</div>}
+                      {slot.existing && <div style={{ position: "absolute", top: "5px", right: "5px", background: "#22c55e", color: "white", fontSize: "8px", fontWeight: "900", padding: "2px 5px", borderRadius: "4px" }}>☁️</div>}
                       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(0,0,0,0.6)", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 6px" }}>
                         <div style={{ display: "flex", gap: "2px" }}>
-                          <button onClick={() => moveImage(idx, idx - 1)} disabled={idx === 0}
-                            style={{ background: "none", border: "none", color: idx === 0 ? "#666" : "white", fontSize: "14px", cursor: idx === 0 ? "default" : "pointer", padding: "2px 4px" }}>←</button>
-                          <button onClick={() => moveImage(idx, idx + 1)} disabled={idx === imageSlots.length - 1}
-                            style={{ background: "none", border: "none", color: idx === imageSlots.length - 1 ? "#666" : "white", fontSize: "14px", cursor: idx === imageSlots.length - 1 ? "default" : "pointer", padding: "2px 4px" }}>→</button>
+                          <button onClick={() => moveImage(idx, idx - 1)} disabled={idx === 0} style={{ background: "none", border: "none", color: idx === 0 ? "#666" : "white", fontSize: "14px", cursor: idx === 0 ? "default" : "pointer", padding: "2px 4px" }}>←</button>
+                          <button onClick={() => moveImage(idx, idx + 1)} disabled={idx === imageSlots.length - 1} style={{ background: "none", border: "none", color: idx === imageSlots.length - 1 ? "#666" : "white", fontSize: "14px", cursor: idx === imageSlots.length - 1 ? "default" : "pointer", padding: "2px 4px" }}>→</button>
                         </div>
-                        <button onClick={() => removeImage(idx)}
-                          style={{ background: "#e53e3e", border: "none", color: "white", fontSize: "11px", fontWeight: "900", padding: "2px 7px", borderRadius: "4px", cursor: "pointer" }}>✕</button>
+                        <button onClick={() => removeImage(idx)} style={{ background: "#e53e3e", border: "none", color: "white", fontSize: "11px", fontWeight: "900", padding: "2px 7px", borderRadius: "4px", cursor: "pointer" }}>✕</button>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-
-              {imageSlots.length > 0 && (
-                <p style={{ fontSize: "11px", color: "#aaa", margin: "10px 0 0", lineHeight: 1.5 }}>
-                  First photo is the cover. ☁️ = already on Cloudinary. Use ← → to reorder.
-                </p>
-              )}
+              {imageSlots.length > 0 && <p style={{ fontSize: "11px", color: "#aaa", margin: "10px 0 0", lineHeight: 1.5 }}>First photo is the cover. ☁️ = already on Cloudinary. Use ← → to reorder.</p>}
             </div>
           </div>
 
-          {/* SUBMIT */}
           <div style={{ display: "flex", gap: "12px", marginTop: "20px", paddingTop: "16px", borderTop: "1px solid #f0f0f0" }}>
-            <button
-              onClick={() => editingId ? updateProduct(editingId) : addProduct()}
-              disabled={formLoading}
+            <button onClick={() => editingId ? updateProduct(editingId) : addProduct()} disabled={formLoading}
               style={{ padding: "13px 28px", background: "#FEE12B", color: "#111", border: "none", borderRadius: "8px", fontWeight: "900", fontSize: "14px", cursor: formLoading ? "not-allowed" : "pointer", opacity: formLoading ? 0.7 : 1, fontFamily: "'DM Sans', sans-serif" }}
               onMouseEnter={e => { if (!formLoading) e.currentTarget.style.background = "#f5d400"; }}
-              onMouseLeave={e => e.currentTarget.style.background = "#FEE12B"}
-            >
+              onMouseLeave={e => e.currentTarget.style.background = "#FEE12B"}>
               {formLoading ? "Uploading & Saving..." : editingId ? "Update Product" : "Add Product"}
             </button>
-            {editingId && (
-              <button onClick={resetForm} style={{ padding: "11px 20px", background: "transparent", border: "2px solid #eee", borderRadius: "8px", fontWeight: "700", fontSize: "13px", cursor: "pointer", color: "#666", fontFamily: "'DM Sans', sans-serif" }}>Cancel</button>
-            )}
+            {editingId && <button onClick={resetForm} style={{ padding: "11px 20px", background: "transparent", border: "2px solid #eee", borderRadius: "8px", fontWeight: "700", fontSize: "13px", cursor: "pointer", color: "#666", fontFamily: "'DM Sans', sans-serif" }}>Cancel</button>}
           </div>
         </div>
       </div>

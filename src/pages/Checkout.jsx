@@ -332,11 +332,11 @@ const placeOrder = async () => {
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
               <div>
                 <label style={lbl}>City <span style={{ color: "#e53e3e" }}>*</span></label>
-                <input placeholder="e.g. Bangalore" value={city} onChange={e => setCity(e.target.value)} style={inp} onFocus={onFocus} onBlur={onBlur} />
+                <input placeholder="e.g. 8th mile" value={city} onChange={e => setCity(e.target.value)} style={inp} onFocus={onFocus} onBlur={onBlur} />
               </div>
               <div>
-                <label style={lbl}>STATE <span style={{ color: "#e53e3e" }}>*</span></label>
-                <input placeholder="e.g. Karnataka" value={district} onChange={e => setDistrict(e.target.value)} style={inp} onFocus={onFocus} onBlur={onBlur} />
+                <label style={lbl}>District <span style={{ color: "#e53e3e" }}>*</span></label>
+                <input placeholder="e.g. Bangalore Urban" value={district} onChange={e => setDistrict(e.target.value)} style={inp} onFocus={onFocus} onBlur={onBlur} />
               </div>
             </div>
             {/* STATE */}
