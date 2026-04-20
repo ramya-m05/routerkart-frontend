@@ -66,6 +66,23 @@ useEffect(() => {
 }, [navigate]);
 
 /* ── FETCH PRODUCTS ── */
+
+const calcStats = (arr) => {
+  const totalProducts = arr.length;
+  const lowStock = arr.filter(p => p.stock <= 3).length;
+
+  setStats({ totalProducts, lowStock });
+};
+
+const calcSales = (arr) => {
+  const revenue = arr.reduce((sum, p) => sum + (p.price * (p.stock || 0)), 0);
+
+  const avgPrice = arr.length
+    ? Math.round(arr.reduce((sum, p) => sum + p.price, 0) / arr.length)
+    : 0;
+
+  setSales({ revenue, avgPrice });
+};
 const fetchProducts = async () => {
   try {
     const res = await API.get("/products");
@@ -95,11 +112,19 @@ useEffect(() => {
 }, []);
 
 /* ── FETCH CUSTOMERS (fixed dependency) ── */
-useEffect(() => {
-  if (showCustomers && customers.length === 0) {
-    fetchCustomers();
+const fetchCustomers = async () => {
+  try {
+    const res = await API.get("/users"); // ✅ correct endpoint
+    setCustomers(res.data);
+  } catch (err) {
+    toast.error("Failed to fetch customers");
   }
-}, [showCustomers, customers.length]);
+};
+useEffect(() => {
+  if (showCustomers) {
+    fetchCustomers();   // 🔥 ALWAYS fetch fresh
+  }
+}, [showCustomers]);
 
 /* ── IMAGE CLEANUP (🚨 important fix) ── */
 useEffect(() => {
@@ -112,82 +137,6 @@ useEffect(() => {
   };
 }, [imageSlots]);
 
-/* ── CUSTOMER STATS (FINAL SAFE VERSION) ── */
-<div
-  style={{
-    display: "grid",
-    gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, 1fr)",
-    gap: "12px",
-    marginBottom: "18px"
-  }}
->
-  {[
-    {
-      label: "Total Customers",
-      value: customers.length,
-      icon: "👥",
-      color: "#2563eb"
-    },
-    {
-      label: "With Phone",
-      value: customers.filter(c => c.phone).length,
-      icon: "📱",
-      color: "#16a34a"
-    },
-    {
-      label: "This Month",
-      value: customers.filter(c => {
-        if (!c.createdAt) return false;
-
-        const d = new Date(c.createdAt);
-        if (isNaN(d)) return false;
-
-        return (
-          d.getMonth() === now.getMonth() &&
-          d.getFullYear() === now.getFullYear()
-        );
-      }).length,
-      icon: "🆕",
-      color: "#7c3aed"
-    }
-  ].map((s, i) => (
-    <div
-      key={i}
-      style={{
-        background: "#F7F7F5",
-        borderRadius: "10px",
-        padding: "14px 16px",
-        display: "flex",
-        alignItems: "center",
-        gap: "12px"
-      }}
-    >
-      <span style={{ fontSize: "22px" }}>{s.icon}</span>
-      <div>
-        <p
-          style={{
-            fontWeight: "900",
-            fontSize: "20px",
-            margin: "0 0 1px",
-            color: s.color
-          }}
-        >
-          {s.value}
-        </p>
-        <p
-          style={{
-            fontSize: "11px",
-            color: "#aaa",
-            margin: 0,
-            fontWeight: "600"
-          }}
-        >
-          {s.label}
-        </p>
-      </div>
-    </div>
-  ))}
-</div>
 
 
 /* ── IMAGE HANDLER (FINAL FIXED) ── */
@@ -221,6 +170,27 @@ const filteredCustomers = (customers || []).filter(c =>
   c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
   c.email?.toLowerCase().includes(customerSearch.toLowerCase()) ||
   c.phone?.toString().includes(customerSearch.trim())
+);
+
+const handleAddCat = async () => {
+  try {
+    const name = prompt("Enter category name:");
+    if (!name) return;
+
+    await API.post("/categories", { name });
+
+    toast.success("Category added ✅");
+
+    fetchProducts(); // if you already have this
+  } catch (err) {
+    toast.error("Failed to add category");
+  }
+};
+
+const filteredProducts = (products || []).filter(p =>
+  p.name?.toLowerCase().includes(searchProd.toLowerCase()) ||
+  p.category?.toLowerCase().includes(searchProd.toLowerCase()) ||
+  p.brand?.toLowerCase().includes(searchProd.toLowerCase())
 );
 
 
@@ -324,7 +294,7 @@ const filteredCustomers = (customers || []).filter(c =>
                 <h3 style={{ fontWeight: "900", fontSize: "16px", color: "#111", margin: "0 0 2px" }}>👥 Customer Accounts</h3>
                 <p style={{ fontSize: "12px", color: "#aaa", margin: 0, fontWeight: "600" }}>{customers.length} registered customer{customers.length !== 1 ? "s" : ""}</p>
               </div>
-              <button onClick={fetchCustomers} style={{ padding: "8px 14px", background: "#f7f7f5", border: "1px solid #eee", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+              <button onClick={fetchProducts} style={{ padding: "8px 14px", background: "#f7f7f5", border: "1px solid #eee", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                 🔄 Refresh
               </button>
             </div>
@@ -449,7 +419,7 @@ const filteredCustomers = (customers || []).filter(c =>
                   </td></tr>
                 ) : filteredProducts.length=== 0 ? (
                   <tr><td colSpan={6} style={{ textAlign: "center", padding: "32px", color: "#aaa", fontSize: "14px" }}>No products found</td></tr>
-                ) : filteredCustomers.map(p => {
+                ) : filteredProducts.map(p => {
   const thumb    = p.images?.[0] || p.image || undefined;
   const imgCount = p.images?.length || (p.image ? 1 : 0);
 
