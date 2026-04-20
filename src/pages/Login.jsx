@@ -127,7 +127,12 @@ function Login() {
               placeholder="you@example.com or 98xxxxxxxx"
               value={identifier}
               onChange={e => { setIdentifier(e.target.value); if (inputErr) setInputErr(""); }}
-              onKeyDown={e => e.key === "Enter" && handleLogin()}
+              onKeyDown={(e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();   // 🔥 VERY IMPORTANT
+    handleLogin();
+  }
+}}
               style={{ ...inputBase, borderColor: inputErr ? "#e53e3e" : "#e5e5e5" }}
               onFocus={fo}
               onBlur={bl}
@@ -155,7 +160,12 @@ function Login() {
                 placeholder="••••••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && handleLogin()}
+                onKeyDown={(e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    handleLogin();
+  }
+}}
                 style={{ ...inputBase, paddingRight: "50px" }}
                 onFocus={fo} onBlur={bl}
               />
