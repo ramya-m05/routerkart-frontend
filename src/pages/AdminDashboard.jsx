@@ -53,181 +53,176 @@ function AdminDashboard() {
   const [stats,       setStats]      = useState({ totalProducts: 0, lowStock: 0 });
   const [sales,       setSales]      = useState({ revenue: 0, avgPrice: 0 });
 
-  if (!localStorage.getItem("token")) { window.location.href = "/"; }
 
-  useEffect(() => { saveCats(categories); }, [categories]);
+  // ✅ Current date (used for stats)
+const now = new Date();
 
-  const fetchProducts = async () => {
-    try {
-      const res = await API.get("/products");
-      const arr = Array.isArray(res.data) ? res.data : [];
-      setProducts(arr);
-      calcStats(arr);
-      calcSales(arr);
-      const dbCats = [...new Set(arr.map(p => p.category).filter(Boolean))];
-      setCategories(prev => {
-        const merged = [...new Set([...prev, ...dbCats])];
-        saveCats(merged);
-        return merged;
-      });
-    } catch { toast.error("Failed to fetch products"); }
-    finally  { setLoading(false); }
+/* ── AUTH CHECK (fixed) ── */
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    navigate("/");
+  }
+}, [navigate]);
+
+/* ── FETCH PRODUCTS ── */
+const fetchProducts = async () => {
+  try {
+    const res = await API.get("/products");
+
+    const arr = Array.isArray(res.data) ? res.data : [];
+
+    setProducts(arr);
+    calcStats(arr);
+    calcSales(arr);
+
+    const dbCats = [...new Set(arr.map(p => p.category).filter(Boolean))];
+
+    setCategories(prev => {
+      const merged = [...new Set([...prev, ...dbCats])];
+      localStorage.setItem("rk_categories", JSON.stringify(merged));
+      return merged;
+    });
+
+  } catch {
+    toast.error("Failed to fetch products");
+  } finally {
+    setLoading(false);
+  }
+};
+useEffect(() => {
+  fetchProducts();
+}, []);
+
+/* ── FETCH CUSTOMERS (fixed dependency) ── */
+useEffect(() => {
+  if (showCustomers && customers.length === 0) {
+    fetchCustomers();
+  }
+}, [showCustomers, customers.length]);
+
+/* ── IMAGE CLEANUP (🚨 important fix) ── */
+useEffect(() => {
+  return () => {
+    imageSlots.forEach(s => {
+      if (!s.existing && s.preview) {
+        URL.revokeObjectURL(s.preview);
+      }
+    });
   };
-  useEffect(() => { fetchProducts(); }, []);
+}, [imageSlots]);
 
-  const fetchCustomers = async () => {
-    try {
-      const res = await API.get("/users");
-      setCustomers(Array.isArray(res.data) ? res.data : []);
-    } catch { toast.error("Failed to fetch customers"); }
-  };
+/* ── CUSTOMER STATS (FINAL SAFE VERSION) ── */
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, 1fr)",
+    gap: "12px",
+    marginBottom: "18px"
+  }}
+>
+  {[
+    {
+      label: "Total Customers",
+      value: customers.length,
+      icon: "👥",
+      color: "#2563eb"
+    },
+    {
+      label: "With Phone",
+      value: customers.filter(c => c.phone).length,
+      icon: "📱",
+      color: "#16a34a"
+    },
+    {
+      label: "This Month",
+      value: customers.filter(c => {
+        if (!c.createdAt) return false;
 
-  useEffect(() => {
-    if (showCustomers && customers.length === 0) fetchCustomers();
-  }, [showCustomers]);
+        const d = new Date(c.createdAt);
+        if (isNaN(d)) return false;
 
-  const calcStats = (p) => {
-    let lStock = 0;
-    p.forEach(x => { if (x.stock <= 3) lStock++; });
-    setStats({ totalProducts: p.length, lowStock: lStock });
-  };
-  const calcSales = (p) => {
-    let rev = 0, tot = 0;
-    p.forEach(x => { rev += Number(x.price) * Number(x.stock); tot += Number(x.price); });
-    setSales({ revenue: rev, avgPrice: p.length ? (tot / p.length).toFixed(0) : 0 });
-  };
-
-  /* ── categories ── */
-  const handleAddCat = () => {
-    const val = newCatName.trim();
-    if (!val) { toast.error("Enter a category name"); return; }
-    if (categories.map(c => c.toLowerCase()).includes(val.toLowerCase())) { toast.error("Already exists"); return; }
-    setCategories(prev => [...prev, val]);
-    setNewCatName("");
-    toast.success(`"${val}" added ✅`);
-  };
-
-  const handleSaveEditCat = () => {
-    const val = editCatVal.trim();
-    const oldName = categories[editCatIdx];
-    if (!val) { toast.error("Name cannot be empty"); return; }
-    if (val.toLowerCase() !== oldName.toLowerCase() && categories.map(c => c.toLowerCase()).includes(val.toLowerCase())) { toast.error("That name already exists"); return; }
-    setCategories(prev => prev.map((c, i) => i === editCatIdx ? val : c));
-    if (category === oldName) setCategory(val);
-    setEditCatIdx(null); setEditCatVal("");
-    toast.success("Category renamed ✅");
-  };
-
-  const handleDeleteCat = (idx) => {
-    if (products.some(p => p.category === categories[idx])) {
-      toast.error(`"${categories[idx]}" is used by products — remove them first`);
-      setDeleteCatIdx(null); return;
+        return (
+          d.getMonth() === now.getMonth() &&
+          d.getFullYear() === now.getFullYear()
+        );
+      }).length,
+      icon: "🆕",
+      color: "#7c3aed"
     }
-    setCategories(prev => prev.filter((_, i) => i !== idx));
-    setDeleteCatIdx(null);
-    toast.success("Category deleted");
-  };
+  ].map((s, i) => (
+    <div
+      key={i}
+      style={{
+        background: "#F7F7F5",
+        borderRadius: "10px",
+        padding: "14px 16px",
+        display: "flex",
+        alignItems: "center",
+        gap: "12px"
+      }}
+    >
+      <span style={{ fontSize: "22px" }}>{s.icon}</span>
+      <div>
+        <p
+          style={{
+            fontWeight: "900",
+            fontSize: "20px",
+            margin: "0 0 1px",
+            color: s.color
+          }}
+        >
+          {s.value}
+        </p>
+        <p
+          style={{
+            fontSize: "11px",
+            color: "#aaa",
+            margin: 0,
+            fontWeight: "600"
+          }}
+        >
+          {s.label}
+        </p>
+      </div>
+    </div>
+  ))}
+</div>
 
-  /* ── images ── */
-  const handleAddImages = (files) => {
-    const arr = Array.from(files);
-    const remaining = MAX_IMAGES - imageSlots.length;
-    if (remaining <= 0) { toast.error(`Max ${MAX_IMAGES} images allowed`); return; }
-    const toAdd = arr.slice(0, remaining);
-    setImageSlots(prev => [...prev, ...toAdd.map(file => ({ file, preview: URL.createObjectURL(file), existing: false }))]);
-    if (arr.length > remaining) toast(`Only first ${remaining} added — max ${MAX_IMAGES}`);
-  };
 
-  const removeImage = (idx) => {
-    setImageSlots(prev => {
-      const copy = [...prev];
-      if (!copy[idx].existing) URL.revokeObjectURL(copy[idx].preview);
-      copy.splice(idx, 1);
-      return copy;
-    });
-  };
+/* ── IMAGE HANDLER (FINAL FIXED) ── */
+const handleAddImages = (files) => {
+  const arr = Array.from(files);
+  const remaining = MAX_IMAGES - imageSlots.length;
 
-  const moveImage = (from, to) => {
-    if (to < 0 || to >= imageSlots.length) return;
-    setImageSlots(prev => {
-      const copy = [...prev];
-      const [item] = copy.splice(from, 1);
-      copy.splice(to, 0, item);
-      return copy;
-    });
-  };
+  if (remaining <= 0) {
+    toast.error(`Max ${MAX_IMAGES} images allowed`);
+    return;
+  }
 
-  const validate = () => {
-    if (!name.trim())                             { toast.error("Product name is required");          return false; }
-    if (!category)                                { toast.error("Please select a category");          return false; }
-    if (!price || isNaN(price) || +price <= 0)    { toast.error("Enter a valid selling price");       return false; }
-    if (originalPrice && +originalPrice < +price) { toast.error("MRP must be ≥ selling price");       return false; }
-    if (!stock || isNaN(stock) || +stock < 0)     { toast.error("Enter valid stock quantity");        return false; }
-    if (!deliveryDays || +deliveryDays < 1)       { toast.error("Enter valid delivery days (min 1)"); return false; }
-    return true;
-  };
+  const toAdd = arr.slice(0, remaining);
 
-  const buildForm = () => {
-    const fd = new FormData();
-    fd.append("name", name); fd.append("category", category); fd.append("description", description);
-    fd.append("price", price); fd.append("stock", stock); fd.append("deliveryDays", deliveryDays);
-    if (originalPrice) fd.append("originalPrice", originalPrice);
-    if (brand) fd.append("brand", brand);
-    if (sku)   fd.append("sku",   sku);
-    imageSlots.filter(s => !s.existing && s.file).forEach(s => fd.append("images", s.file));
-    fd.append("existingImages", JSON.stringify(imageSlots.filter(s => s.existing).map(s => s.preview)));
-    return fd;
-  };
+  setImageSlots(prev => [
+    ...prev,
+    ...toAdd.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      existing: false
+    }))
+  ]);
 
-  const addProduct = async () => {
-    if (!validate()) return;
-    setFormLoading(true);
-    try { await API.post("/products", buildForm()); toast.success("Product added ✅"); fetchProducts(); resetForm(); }
-    catch (err) { toast.error(err.response?.data?.message || "Failed to add product"); }
-    finally { setFormLoading(false); }
-  };
+  if (arr.length > remaining) {
+    toast(`Only first ${remaining} added — max ${MAX_IMAGES}`);
+  }
+};
 
-  const updateProduct = async (id) => {
-    if (!validate()) return;
-    setFormLoading(true);
-    try { await API.put(`/products/${id}`, buildForm()); toast.success("Product updated ✅"); fetchProducts(); resetForm(); }
-    catch (err) { toast.error(err.response?.data?.message || "Failed to update"); }
-    finally { setFormLoading(false); }
-  };
+/* ── FILTER CUSTOMERS (IMPROVED) ── */
+const filteredCustomers = (customers || []).filter(c =>
+  c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+  c.email?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+  c.phone?.toString().includes(customerSearch.trim())
+);
 
-  const deleteProduct = async (id) => {
-    try { await API.delete(`/products/${id}`); toast.success("Deleted"); setDeleteId(null); fetchProducts(); }
-    catch { toast.error("Failed to delete"); }
-  };
-
-  const startEdit = (p) => {
-    setEditingId(p._id);
-    setName(p.name || ""); setCategory(p.category || ""); setDescription(p.description || "");
-    setPrice(p.price || ""); setStock(p.stock || ""); setOriginalPrice(p.originalPrice || "");
-    setDeliveryDays(p.deliveryDays || "5"); setBrand(p.brand || ""); setSku(p.sku || "");
-    const fromArray  = Array.isArray(p.images) ? p.images : [];
-    const fromSingle = p.image && !fromArray.includes(p.image) ? [p.image] : [];
-    setImageSlots([...fromArray, ...fromSingle].filter(Boolean).map(url => ({ file: null, preview: url, existing: true })));
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-  };
-
-  const resetForm = () => {
-    setName(""); setDescription(""); setPrice(""); setOriginalPrice("");
-    setStock(""); setCategory(""); setDeliveryDays("5"); setBrand(""); setSku("");
-    imageSlots.forEach(s => { if (!s.existing) URL.revokeObjectURL(s.preview); });
-    setImageSlots([]); setEditingId(null);
-  };
-
-  const filtered = products.filter(p =>
-    p.name?.toLowerCase().includes(searchProd.toLowerCase()) ||
-    p.category?.toLowerCase().includes(searchProd.toLowerCase())
-  );
-
-  const filteredCustomers = customers.filter(c =>
-    c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    c.email?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    c.phone?.includes(customerSearch)
-  );
 
   const catColor = (cat) => CAT_COLORS[categories.indexOf(cat) % CAT_COLORS.length] || "#f0f0f0";
   const discP    = (orig, sell) => orig > sell ? Math.round(((orig - sell) / orig) * 100) : 0;
@@ -339,7 +334,11 @@ function AdminDashboard() {
               {[
                 { label: "Total Customers", value: customers.length,                                                       icon: "👥", color: "#2563eb" },
                 { label: "With Phone",       value: customers.filter(c => c.phone).length,                                  icon: "📱", color: "#16a34a" },
-                { label: "This Month",       value: customers.filter(c => new Date(c.createdAt).getMonth() === new Date().getMonth()).length, icon: "🆕", color: "#7c3aed" },
+                { label: "This Month",       value: customers.filter(c => {
+  const d = new Date(c.createdAt);
+  return d.getMonth() === now.getMonth() &&
+         d.getFullYear() === now.getFullYear();
+}).length, icon: "🆕", color: "#7c3aed" },
               ].map((s, i) => (
                 <div key={i} style={{ background: "#F7F7F5", borderRadius: "10px", padding: "14px 16px", display: "flex", alignItems: "center", gap: "12px" }}>
                   <span style={{ fontSize: "22px" }}>{s.icon}</span>
@@ -411,7 +410,7 @@ function AdminDashboard() {
             { label: "Products",   value: stats.totalProducts,                   icon: "📦" },
             { label: "Low Stock",  value: stats.lowStock,                        icon: "⚠️", danger: true },
             { label: "Categories", value: categories.length,                     icon: "🗂️" },
-            { label: "Revenue",    value: `₹${sales.revenue?.toLocaleString()}`, icon: "💰" },
+            { label: "Inventory Value",    value: `₹${sales.revenue?.toLocaleString()}`, icon: "💰" },
             { label: "Avg. Price", value: `₹${sales.avgPrice}`,                 icon: "📊" },
           ].map((s, i) => (
             <div key={i} style={{ background: "white", borderRadius: "10px", padding: "14px", display: "flex", alignItems: "center", gap: "12px", border: "1px solid #ececec", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
@@ -448,11 +447,12 @@ function AdminDashboard() {
                   <tr><td colSpan={6} style={{ textAlign: "center", padding: "40px" }}>
                     <div style={{ width: "28px", height: "28px", border: "3px solid #eee", borderTop: "3px solid #FEE12B", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
                   </td></tr>
-                ) : filtered.length === 0 ? (
+                ) : filteredProducts.length=== 0 ? (
                   <tr><td colSpan={6} style={{ textAlign: "center", padding: "32px", color: "#aaa", fontSize: "14px" }}>No products found</td></tr>
-                ) : filtered.map(p => {
-                  const thumb    = p.images?.[0] || p.image || undefined;
-                  const imgCount = p.images?.length || (p.image ? 1 : 0);
+                ) : filteredCustomers.map(p => {
+  const thumb    = p.images?.[0] || p.image || undefined;
+  const imgCount = p.images?.length || (p.image ? 1 : 0);
+
                   return (
                     <tr key={p._id} style={{ borderBottom: "1px solid #f5f5f5" }}
                       onMouseEnter={e => e.currentTarget.style.background = "#FAFAF8"}
@@ -590,7 +590,7 @@ function AdminDashboard() {
                 <label style={lbl}>Product Photos</label>
                 <span style={{ fontSize: "11px", color: imageSlots.length >= MAX_IMAGES ? "#e53e3e" : "#aaa", fontWeight: "600" }}>{imageSlots.length}/{MAX_IMAGES}</span>
               </div>
-              <div style={{ background: "#F0FDF4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "8px 12px", marginBottom: "10px", fontSize: "11px", color: "#16a34a", fontWeight: "600" }}>☁️ Images upload to Cloudinary automatically</div>
+              
               {imageSlots.length < MAX_IMAGES && (
                 <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "2px dashed #FEE12B", borderRadius: "10px", padding: "18px 12px", cursor: "pointer", background: "#FFFDF0", marginBottom: "12px", transition: "background 0.15s" }}
                   onMouseEnter={e => e.currentTarget.style.background = "#FFF8D0"} onMouseLeave={e => e.currentTarget.style.background = "#FFFDF0"}>
