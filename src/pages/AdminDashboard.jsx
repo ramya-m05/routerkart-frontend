@@ -137,6 +137,156 @@ useEffect(() => {
   };
 }, [imageSlots]);
 
+const addProduct = async () => {
+  try {
+    setFormLoading(true);
+
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("description", description);
+    formData.append("price", price);
+    formData.append("originalPrice", originalPrice);
+    formData.append("stock", stock);
+    formData.append("category", category);
+    formData.append("brand", brand);
+    formData.append("sku", sku);
+    formData.append("deliveryDays", deliveryDays);
+
+    imageSlots.forEach(s => {
+      if (!s.existing && s.file) {
+        formData.append("images", s.file);
+      }
+    });
+
+    await API.post("/products", formData);
+
+    toast.success("Product added ✅");
+    resetForm();
+    fetchProducts();
+
+  } catch (err) {
+    toast.error("Failed to add product");
+  } finally {
+    setFormLoading(false);
+  }
+};
+
+
+const updateProduct = async (id) => {
+  try {
+    setFormLoading(true);
+
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("description", description);
+    formData.append("price", price);
+    formData.append("originalPrice", originalPrice);
+    formData.append("stock", stock);
+    formData.append("category", category);
+    formData.append("brand", brand);
+    formData.append("sku", sku);
+    formData.append("deliveryDays", deliveryDays);
+
+    imageSlots.forEach(s => {
+      if (!s.existing && s.file) {
+        formData.append("images", s.file);
+      }
+    });
+
+    await API.put(`/products/${id}`, formData);
+
+    toast.success("Product updated ✅");
+    resetForm();
+    fetchProducts();
+
+  } catch {
+    toast.error("Failed to update product");
+  } finally {
+    setFormLoading(false);
+  }
+};
+
+const deleteProduct = async (id) => {
+  try {
+    await API.delete(`/products/${id}`);
+    toast.success("Deleted successfully 🗑️");
+
+    setDeleteId(null);
+    fetchProducts();
+
+  } catch {
+    toast.error("Delete failed");
+  }
+};
+
+
+const startEdit = (p) => {
+  setEditingId(p._id);
+  setName(p.name);
+  setDescription(p.description);
+  setPrice(p.price);
+  setOriginalPrice(p.originalPrice || "");
+  setStock(p.stock);
+  setCategory(p.category);
+  setBrand(p.brand || "");
+  setSku(p.sku || "");
+  setDeliveryDays(p.deliveryDays || 5);
+
+  const imgs = (p.images || []).map(url => ({
+    preview: url,
+    existing: true
+  }));
+
+  setImageSlots(imgs);
+};
+
+const resetForm = () => {
+  setEditingId(null);
+  setName("");
+  setDescription("");
+  setPrice("");
+  setOriginalPrice("");
+  setStock("");
+  setCategory("");
+  setBrand("");
+  setSku("");
+  setDeliveryDays("5");
+  setImageSlots([]);
+};
+
+const removeImage = (idx) => {
+  setImageSlots(prev => prev.filter((_, i) => i !== idx));
+};
+
+const moveImage = (from, to) => {
+  if (to < 0 || to >= imageSlots.length) return;
+
+  const updated = [...imageSlots];
+  const [item] = updated.splice(from, 1);
+  updated.splice(to, 0, item);
+
+  setImageSlots(updated);
+};
+
+const handleSaveEditCat = () => {
+  if (!editCatVal.trim()) return;
+
+  const updated = [...categories];
+  updated[editCatIdx] = editCatVal.trim();
+
+  setCategories(updated);
+  saveCats(updated);
+
+  setEditCatIdx(null);
+  setEditCatVal("");
+};
+
+const handleDeleteCat = (idx) => {
+  const updated = categories.filter((_, i) => i !== idx);
+  setCategories(updated);
+  saveCats(updated);
+  setDeleteCatIdx(null);
+};
 
 
 /* ── IMAGE HANDLER (FINAL FIXED) ── */
