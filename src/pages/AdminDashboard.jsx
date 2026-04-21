@@ -65,7 +65,6 @@ useEffect(() => {
   }
 }, [navigate]);
 
-/* ── FETCH PRODUCTS ── */
 
 const calcStats = (arr) => {
   const totalProducts = arr.length;
@@ -83,16 +82,39 @@ const calcSales = (arr) => {
 
   setSales({ revenue, avgPrice });
 };
+
+
+/* ───────────────── FETCH PRODUCTS ───────────────── */
+
 const fetchProducts = async () => {
   try {
+    setLoading(true);
+
     const res = await API.get("/products");
 
     const arr = Array.isArray(res.data) ? res.data : [];
 
     setProducts(arr);
-    calcStats(arr);
-    calcSales(arr);
 
+    // ✅ Stats
+    const totalProducts = arr.length;
+    const lowStock = arr.filter(p => Number(p.stock) <= 3).length;
+
+    setStats({ totalProducts, lowStock });
+
+    // ✅ Sales
+    const revenue = arr.reduce(
+      (sum, p) => sum + (Number(p.price) * (Number(p.stock) || 0)),
+      0
+    );
+
+    const avgPrice = arr.length
+      ? Math.round(arr.reduce((sum, p) => sum + Number(p.price), 0) / arr.length)
+      : 0;
+
+    setSales({ revenue, avgPrice });
+
+    // ✅ Categories merge
     const dbCats = [...new Set(arr.map(p => p.category).filter(Boolean))];
 
     setCategories(prev => {
@@ -101,133 +123,134 @@ const fetchProducts = async () => {
       return merged;
     });
 
-  } catch {
+  } catch (err) {
+    console.error("FETCH PRODUCTS ERROR:", err.response?.data || err.message);
     toast.error("Failed to fetch products");
   } finally {
     setLoading(false);
   }
 };
+
 useEffect(() => {
   fetchProducts();
 }, []);
 
-/* ── FETCH CUSTOMERS (fixed dependency) ── */
-const fetchCustomers = async () => {
-  try {
-    const res = await API.get("/users"); // ✅ correct endpoint
-    setCustomers(res.data);
-  } catch (err) {
-    toast.error("Failed to fetch customers");
-  }
-};
-useEffect(() => {
-  if (showCustomers) {
-    fetchCustomers();   // 🔥 ALWAYS fetch fresh
-  }
-}, [showCustomers]);
 
-/* ── IMAGE CLEANUP (🚨 important fix) ── */
-useEffect(() => {
-  return () => {
-    imageSlots.forEach(s => {
-      if (!s.existing && s.preview) {
-        URL.revokeObjectURL(s.preview);
-      }
-    });
-  };
-}, [imageSlots]);
+/* ───────────────── ADD PRODUCT ───────────────── */
 
 const addProduct = async () => {
   try {
     setFormLoading(true);
 
+    // 🔒 Validation (IMPORTANT)
+    if (!name || !price || !stock || !category) {
+      toast.error("Please fill required fields");
+      return;
+    }
+
     const formData = new FormData();
-    formData.append("name", name);
-    formData.append("description", description);
-    formData.append("price", price);
-    formData.append("originalPrice", originalPrice);
-    formData.append("stock", stock);
+
+    formData.append("name", name.trim());
+    formData.append("description", description || "");
+    formData.append("price", Number(price));
+    formData.append("originalPrice", Number(originalPrice) || "");
+    formData.append("stock", Number(stock));
     formData.append("category", category);
-    formData.append("brand", brand);
-    formData.append("sku", sku);
-    formData.append("deliveryDays", deliveryDays);
+    formData.append("brand", brand || "");
+    formData.append("sku", sku || "");
+    formData.append("deliveryDays", Number(deliveryDays) || 5);
 
     imageSlots.forEach(s => {
-      if (!s.existing && s.file) {
-        formData.append("images", s.file);
-      }
+      if (s.file) formData.append("images", s.file);
     });
 
-    await API.post("/products", formData);
+    const res = await API.post("/products", formData);
+
+    console.log("ADD RESPONSE:", res.data);
 
     toast.success("Product added ✅");
+
     resetForm();
     fetchProducts();
 
   } catch (err) {
-    toast.error("Failed to add product");
+    console.error("ADD ERROR:", err.response?.data || err.message);
+    toast.error(err.response?.data?.message || "Failed to add product");
   } finally {
     setFormLoading(false);
   }
 };
 
+
+/* ───────────────── UPDATE PRODUCT ───────────────── */
 
 const updateProduct = async (id) => {
   try {
     setFormLoading(true);
 
     const formData = new FormData();
-    formData.append("name", name);
-    formData.append("description", description);
-    formData.append("price", price);
-    formData.append("originalPrice", originalPrice);
-    formData.append("stock", stock);
+
+    formData.append("name", name.trim());
+    formData.append("description", description || "");
+    formData.append("price", Number(price));
+    formData.append("originalPrice", Number(originalPrice) || "");
+    formData.append("stock", Number(stock));
     formData.append("category", category);
-    formData.append("brand", brand);
-    formData.append("sku", sku);
-    formData.append("deliveryDays", deliveryDays);
+    formData.append("brand", brand || "");
+    formData.append("sku", sku || "");
+    formData.append("deliveryDays", Number(deliveryDays) || 5);
 
     imageSlots.forEach(s => {
-      if (!s.existing && s.file) {
-        formData.append("images", s.file);
-      }
+      if (s.file) formData.append("images", s.file);
     });
 
-    await API.put(`/products/${id}`, formData);
+    const res = await API.put(`/products/${id}`, formData);
+
+    console.log("UPDATE RESPONSE:", res.data);
 
     toast.success("Product updated ✅");
+
     resetForm();
     fetchProducts();
 
-  } catch {
-    toast.error("Failed to update product");
+  } catch (err) {
+    console.error("UPDATE ERROR:", err.response?.data || err.message);
+    toast.error(err.response?.data?.message || "Failed to update product");
   } finally {
     setFormLoading(false);
   }
 };
 
+
+/* ───────────────── DELETE PRODUCT ───────────────── */
+
 const deleteProduct = async (id) => {
   try {
     await API.delete(`/products/${id}`);
-    toast.success("Deleted successfully 🗑️");
+
+    toast.success("Product deleted ✅");
 
     setDeleteId(null);
     fetchProducts();
 
-  } catch {
-    toast.error("Delete failed");
+  } catch (err) {
+    console.error("DELETE ERROR:", err.response?.data || err.message);
+    toast.error("Failed to delete product");
   }
 };
 
 
+/* ───────────────── EDIT PRODUCT ───────────────── */
+
 const startEdit = (p) => {
   setEditingId(p._id);
-  setName(p.name);
-  setDescription(p.description);
-  setPrice(p.price);
+
+  setName(p.name || "");
+  setDescription(p.description || "");
+  setPrice(p.price || "");
   setOriginalPrice(p.originalPrice || "");
-  setStock(p.stock);
-  setCategory(p.category);
+  setStock(p.stock || "");
+  setCategory(p.category || "");
   setBrand(p.brand || "");
   setSku(p.sku || "");
   setDeliveryDays(p.deliveryDays || 5);
@@ -240,8 +263,12 @@ const startEdit = (p) => {
   setImageSlots(imgs);
 };
 
+
+/* ───────────────── RESET FORM ───────────────── */
+
 const resetForm = () => {
   setEditingId(null);
+
   setName("");
   setDescription("");
   setPrice("");
@@ -251,8 +278,12 @@ const resetForm = () => {
   setBrand("");
   setSku("");
   setDeliveryDays("5");
+
   setImageSlots([]);
 };
+
+
+/* ───────────────── IMAGE HANDLING ───────────────── */
 
 const removeImage = (idx) => {
   setImageSlots(prev => prev.filter((_, i) => i !== idx));
@@ -268,28 +299,6 @@ const moveImage = (from, to) => {
   setImageSlots(updated);
 };
 
-const handleSaveEditCat = () => {
-  if (!editCatVal.trim()) return;
-
-  const updated = [...categories];
-  updated[editCatIdx] = editCatVal.trim();
-
-  setCategories(updated);
-  saveCats(updated);
-
-  setEditCatIdx(null);
-  setEditCatVal("");
-};
-
-const handleDeleteCat = (idx) => {
-  const updated = categories.filter((_, i) => i !== idx);
-  setCategories(updated);
-  saveCats(updated);
-  setDeleteCatIdx(null);
-};
-
-
-/* ── IMAGE HANDLER (FINAL FIXED) ── */
 const handleAddImages = (files) => {
   const arr = Array.from(files);
   const remaining = MAX_IMAGES - imageSlots.length;
@@ -311,31 +320,12 @@ const handleAddImages = (files) => {
   ]);
 
   if (arr.length > remaining) {
-    toast(`Only first ${remaining} added — max ${MAX_IMAGES}`);
+    toast(`Only first ${remaining} added`);
   }
 };
 
-/* ── FILTER CUSTOMERS (IMPROVED) ── */
-const filteredCustomers = (customers || []).filter(c =>
-  c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-  c.email?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-  c.phone?.toString().includes(customerSearch.trim())
-);
 
-const handleAddCat = async () => {
-  try {
-    const name = prompt("Enter category name:");
-    if (!name) return;
-
-    await API.post("/categories", { name });
-
-    toast.success("Category added ✅");
-
-    fetchProducts(); // if you already have this
-  } catch (err) {
-    toast.error("Failed to add category");
-  }
-};
+/* ───────────────── FILTERS ───────────────── */
 
 const filteredProducts = (products || []).filter(p =>
   p.name?.toLowerCase().includes(searchProd.toLowerCase()) ||
@@ -343,6 +333,11 @@ const filteredProducts = (products || []).filter(p =>
   p.brand?.toLowerCase().includes(searchProd.toLowerCase())
 );
 
+const filteredCustomers = (customers || []).filter(c =>
+  c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+  c.email?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+  c.phone?.toString().includes(customerSearch.trim())
+);
 
   const catColor = (cat) => CAT_COLORS[categories.indexOf(cat) % CAT_COLORS.length] || "#f0f0f0";
   const discP    = (orig, sell) => orig > sell ? Math.round(((orig - sell) / orig) * 100) : 0;
