@@ -142,7 +142,6 @@ const addProduct = async () => {
   try {
     setFormLoading(true);
 
-    // 🔒 Validation (IMPORTANT)
     if (!name || !price || !stock || !category) {
       toast.error("Please fill required fields");
       return;
@@ -153,15 +152,18 @@ const addProduct = async () => {
     formData.append("name", name.trim());
     formData.append("description", description || "");
     formData.append("price", Number(price));
-    formData.append("originalPrice", Number(originalPrice) || "");
+    formData.append("originalPrice", originalPrice ? Number(originalPrice) : "");
     formData.append("stock", Number(stock));
     formData.append("category", category);
     formData.append("brand", brand || "");
     formData.append("sku", sku || "");
     formData.append("deliveryDays", Number(deliveryDays) || 5);
 
+    // ✅ ONLY new images
     imageSlots.forEach(s => {
-      if (s.file) formData.append("images", s.file);
+      if (s.file) {
+        formData.append("images", s.file);
+      }
     });
 
     const res = await API.post("/products", formData);
@@ -193,15 +195,25 @@ const updateProduct = async (id) => {
     formData.append("name", name.trim());
     formData.append("description", description || "");
     formData.append("price", Number(price));
-    formData.append("originalPrice", Number(originalPrice) || "");
+    formData.append("originalPrice", originalPrice ? Number(originalPrice) : "");
     formData.append("stock", Number(stock));
     formData.append("category", category);
     formData.append("brand", brand || "");
     formData.append("sku", sku || "");
     formData.append("deliveryDays", Number(deliveryDays) || 5);
 
+    // ✅ IMPORTANT: send existing images
+    const existingImages = imageSlots
+      .filter(s => s.existing)
+      .map(s => s.preview);
+
+    formData.append("existingImages", JSON.stringify(existingImages));
+
+    // ✅ send new images
     imageSlots.forEach(s => {
-      if (s.file) formData.append("images", s.file);
+      if (s.file) {
+        formData.append("images", s.file);
+      }
     });
 
     const res = await API.put(`/products/${id}`, formData);
@@ -220,7 +232,6 @@ const updateProduct = async (id) => {
     setFormLoading(false);
   }
 };
-
 
 /* ───────────────── DELETE PRODUCT ───────────────── */
 
