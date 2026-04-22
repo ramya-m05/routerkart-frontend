@@ -103,46 +103,73 @@ function ForgotPassword() {
   
 
   /* ── STEP 2: Verify OTP ── */
-  const handleVerifyOtp = async () => {
-    if (otp.length !== 6) { toast.error("Please enter the 6-digit OTP"); return; }
-    setLoading(true);
-    try {
-      await API.post("/auth/forgot-password/verify-otp", {
-        email: email.trim().toLowerCase(),
-        otp:   otp.trim(),
-      });
-      toast.success("OTP verified ✅ Set your new password");
-      setStep(STEP.RESET);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Invalid or expired OTP");
-    } finally {
-      setLoading(false);
-    }
-  };
+const handleVerifyOtp = async () => {
+  if (otp.length !== 6) {
+    return toast.error("Enter valid 6-digit OTP");
+  }
 
-  /* ── STEP 3: Reset password ── */
-  const handleResetPassword = async () => {
-    if (newPass.length < 6) {
-      toast.error("Password must be at least 6 characters"); return;
+  setLoading(true);
+
+  try {
+    const res = await API.post("/auth/forgot-password/verify-otp", {
+      email: email.trim().toLowerCase(),
+      otp: otp.trim(),
+    });
+
+    // ✅ store reset token from backend
+    localStorage.setItem("resetToken", res.data.resetToken);
+
+    toast.success("OTP verified successfully ✅");
+
+    setStep(STEP.RESET);
+
+  } catch (err) {
+    toast.error(err.response?.data?.message || "Invalid OTP");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+/* ── STEP 3: Reset password ── */
+const handleResetPassword = async () => {
+  if (newPass.length < 6) {
+    return toast.error("Password must be at least 6 characters");
+  }
+
+  if (newPass !== confirmP) {
+    return toast.error("Passwords do not match");
+  }
+
+  setLoading(true);
+
+  try {
+    const resetToken = localStorage.getItem("resetToken");
+
+    if (!resetToken) {
+      return toast.error("Session expired. Please verify OTP again.");
     }
-    if (newPass !== confirmP) {
-      toast.error("Passwords do not match"); return;
-    }
-    setLoading(true);
-    try {
-      await API.post("/auth/forgot-password/reset", {
-        email:       email.trim().toLowerCase(),
-        otp:         otp.trim(),
-        newPassword: newPass,
-      });
-      toast.success("Password reset successful! Please login 🎉");
-      setStep(STEP.DONE);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to reset password");
-    } finally {
-      setLoading(false);
-    }
-  };
+
+    await API.post("/auth/forgot-password/reset", {
+      email: email.trim().toLowerCase(),
+      newPassword: newPass,
+      resetToken,
+    });
+
+    toast.success("Password reset successful 🎉");
+
+    // clear token after use
+    localStorage.removeItem("resetToken");
+
+    setStep(STEP.DONE);
+
+  } catch (err) {
+    toast.error(err.response?.data?.message || "Reset failed");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   /* ── shared styles ── */
   const inputBase = {
