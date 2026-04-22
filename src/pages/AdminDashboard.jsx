@@ -208,7 +208,6 @@ const updateProduct = async (id) => {
       .map(s => s.preview);
 
     formData.append("existingImages", JSON.stringify(existingImages));
-
     // ✅ send new images
     imageSlots.forEach(s => {
       if (s.file) {
