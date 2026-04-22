@@ -254,26 +254,31 @@ const deleteProduct = async (id) => {
 /* ───────────────── EDIT PRODUCT ───────────────── */
 
 const startEdit = (p) => {
+  console.log("EDIT PRODUCT DATA:", p);
+  console.log("IMAGES:", p.images);
+
   setEditingId(p._id);
 
-  setName(p.name || "");
-  setDescription(p.description || "");
-  setPrice(p.price || "");
+  setName(p.name);
+  setDescription(p.description);
+  setPrice(p.price);
   setOriginalPrice(p.originalPrice || "");
-  setStock(p.stock || "");
-  setCategory(p.category || "");
+  setStock(p.stock);
+  setCategory(p.category);
   setBrand(p.brand || "");
   setSku(p.sku || "");
   setDeliveryDays(p.deliveryDays || 5);
 
-  const imgs = (p.images || []).map(url => ({
-    preview: url,
-    existing: true
-  }));
+  // ✅ FIX HERE
+  const imgs = (p.images || [])
+    .filter(url => url && url.trim() !== "")   // 🔥 remove empty images
+    .map(url => ({
+      preview: url,
+      existing: true
+    }));
 
   setImageSlots(imgs);
 };
-
 
 /* ───────────────── RESET FORM ───────────────── */
 
@@ -730,7 +735,15 @@ const filteredCustomers = (customers || []).filter(c =>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                   {imageSlots.map((slot, idx) => (
                     <div key={idx} style={{ position: "relative", borderRadius: "8px", overflow: "hidden", border: idx === 0 ? "3px solid #FEE12B" : "2px solid #eee", aspectRatio: "1", background: "#f5f5f0" }}>
-                      <img src={slot.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      <img
+  src={slot.preview || "/placeholder.png"}
+  alt="product"
+  style={{
+    width: "100%",
+    height: "100%",
+    objectFit: "cover"
+  }}
+/>
                       {idx === 0 && <div style={{ position: "absolute", top: "5px", left: "5px", background: "#FEE12B", color: "#111", fontSize: "9px", fontWeight: "900", padding: "2px 6px", borderRadius: "4px" }}>COVER</div>}
                       {slot.existing && <div style={{ position: "absolute", top: "5px", right: "5px", background: "#22c55e", color: "white", fontSize: "8px", fontWeight: "900", padding: "2px 5px", borderRadius: "4px" }}>☁️</div>}
                       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(0,0,0,0.6)", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 6px" }}>
