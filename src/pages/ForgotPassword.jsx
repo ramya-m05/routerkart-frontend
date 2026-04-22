@@ -141,25 +141,20 @@ const handleResetPassword = async () => {
     return toast.error("Passwords do not match");
   }
 
+  if (!otp || otp.length !== 6) {
+    return toast.error("Enter valid OTP");
+  }
+
   setLoading(true);
 
   try {
-    const resetToken = localStorage.getItem("resetToken");
-
-    if (!resetToken) {
-      return toast.error("Session expired. Please verify OTP again.");
-    }
-
     await API.post("/auth/forgot-password/reset", {
       email: email.trim().toLowerCase(),
-      newPassword: newPass,
-      resetToken,
+      otp: otp.trim(),          // ✅ REQUIRED
+      newPassword: newPass,     // ✅ REQUIRED
     });
 
     toast.success("Password reset successful 🎉");
-
-    // clear token after use
-    localStorage.removeItem("resetToken");
 
     setStep(STEP.DONE);
 
