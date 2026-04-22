@@ -13,6 +13,7 @@ const CAT_COLORS   = ["#FEE12B", "#bfdbfe", "#bbf7d0", "#fde68a", "#e9d5ff", "#f
 function AdminDashboard() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const now      = new Date();
 
   /* ── product fields ── */
   const [products,      setProducts]      = useState([]);
@@ -53,313 +54,274 @@ function AdminDashboard() {
   const [stats,       setStats]      = useState({ totalProducts: 0, lowStock: 0 });
   const [sales,       setSales]      = useState({ revenue: 0, avgPrice: 0 });
 
+  /* ── auth check ── */
+  useEffect(() => {
+    if (!localStorage.getItem("token")) navigate("/");
+  }, [navigate]);
 
-  // ✅ Current date (used for stats)
-const now = new Date();
+  /* ── save categories on change ── */
+  useEffect(() => { saveCats(categories); }, [categories]);
 
-/* ── AUTH CHECK (fixed) ── */
-useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    navigate("/");
-  }
-}, [navigate]);
+  /* ═══════════════════════════════════════
+     FETCH PRODUCTS
+  ════════════════════════════════════════ */
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const res = await API.get("/products");
+      const arr = Array.isArray(res.data) ? res.data : [];
+      setProducts(arr);
 
+      // stats
+      setStats({
+        totalProducts: arr.length,
+        lowStock: arr.filter(p => Number(p.stock) <= 3).length,
+      });
 
-const calcStats = (arr) => {
-  const totalProducts = arr.length;
-  const lowStock = arr.filter(p => p.stock <= 3).length;
+      // sales
+      const revenue  = arr.reduce((s, p) => s + Number(p.price) * Number(p.stock || 0), 0);
+      const avgPrice = arr.length ? Math.round(arr.reduce((s, p) => s + Number(p.price), 0) / arr.length) : 0;
+      setSales({ revenue, avgPrice });
 
-  setStats({ totalProducts, lowStock });
-};
-
-const calcSales = (arr) => {
-  const revenue = arr.reduce((sum, p) => sum + (p.price * (p.stock || 0)), 0);
-
-  const avgPrice = arr.length
-    ? Math.round(arr.reduce((sum, p) => sum + p.price, 0) / arr.length)
-    : 0;
-
-  setSales({ revenue, avgPrice });
-};
-
-
-/* ───────────────── FETCH PRODUCTS ───────────────── */
-
-const fetchProducts = async () => {
-  try {
-    setLoading(true);
-
-    const res = await API.get("/products");
-
-    const arr = Array.isArray(res.data) ? res.data : [];
-
-    setProducts(arr);
-
-    // ✅ Stats
-    const totalProducts = arr.length;
-    const lowStock = arr.filter(p => Number(p.stock) <= 3).length;
-
-    setStats({ totalProducts, lowStock });
-
-    // ✅ Sales
-    const revenue = arr.reduce(
-      (sum, p) => sum + (Number(p.price) * (Number(p.stock) || 0)),
-      0
-    );
-
-    const avgPrice = arr.length
-      ? Math.round(arr.reduce((sum, p) => sum + Number(p.price), 0) / arr.length)
-      : 0;
-
-    setSales({ revenue, avgPrice });
-
-    // ✅ Categories merge
-    const dbCats = [...new Set(arr.map(p => p.category).filter(Boolean))];
-
-    setCategories(prev => {
-      const merged = [...new Set([...prev, ...dbCats])];
-      localStorage.setItem("rk_categories", JSON.stringify(merged));
-      return merged;
-    });
-
-  } catch (err) {
-    console.error("FETCH PRODUCTS ERROR:", err.response?.data || err.message);
-    toast.error("Failed to fetch products");
-  } finally {
-    setLoading(false);
-  }
-};
-
-useEffect(() => {
-  fetchProducts();
-}, []);
-
-
-/* ───────────────── ADD PRODUCT ───────────────── */
-
-const addProduct = async () => {
-  try {
-    setFormLoading(true);
-
-    if (!name || !price || !stock || !category) {
-      toast.error("Please fill required fields");
-      return;
+      // merge categories
+      const dbCats = [...new Set(arr.map(p => p.category).filter(Boolean))];
+      setCategories(prev => {
+        const merged = [...new Set([...prev, ...dbCats])];
+        saveCats(merged);
+        return merged;
+      });
+    } catch (err) {
+      console.error("FETCH ERROR:", err.response?.data || err.message);
+      toast.error("Failed to fetch products");
+    } finally {
+      setLoading(false);
     }
+  };
+  useEffect(() => { fetchProducts(); }, []);
 
-    const formData = new FormData();
+  /* ═══════════════════════════════════════
+     FETCH CUSTOMERS
+  ════════════════════════════════════════ */
+  const fetchCustomers = async () => {
+    try {
+      const res = await API.get("/users");
+      setCustomers(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("FETCH CUSTOMERS ERROR:", err.response?.data || err.message);
+      toast.error("Failed to fetch customers");
+    }
+  };
 
-    formData.append("name", name.trim());
-    formData.append("description", description || "");
-    formData.append("price", Number(price));
-    formData.append("originalPrice", originalPrice ? Number(originalPrice) : "");
-    formData.append("stock", Number(stock));
-    formData.append("category", category);
-    formData.append("brand", brand || "");
-    formData.append("sku", sku || "");
-    formData.append("deliveryDays", Number(deliveryDays) || 5);
+  useEffect(() => {
+    if (showCustomers && customers.length === 0) fetchCustomers();
+  }, [showCustomers]);
 
-    // ✅ ONLY new images
-    imageSlots.forEach(s => {
-      if (s.file) {
-        formData.append("images", s.file);
+  /* ═══════════════════════════════════════
+     CATEGORY MANAGEMENT
+  ════════════════════════════════════════ */
+  const handleAddCat = () => {
+    const val = newCatName.trim();
+    if (!val) { toast.error("Enter a category name"); return; }
+    if (categories.map(c => c.toLowerCase()).includes(val.toLowerCase())) { toast.error("Category already exists"); return; }
+    setCategories(prev => [...prev, val]);
+    setNewCatName("");
+    toast.success(`"${val}" added ✅`);
+  };
+
+  const handleSaveEditCat = () => {
+    const val     = editCatVal.trim();
+    const oldName = categories[editCatIdx];
+    if (!val) { toast.error("Name cannot be empty"); return; }
+    if (val.toLowerCase() !== oldName.toLowerCase() && categories.map(c => c.toLowerCase()).includes(val.toLowerCase())) {
+      toast.error("That name already exists"); return;
+    }
+    setCategories(prev => prev.map((c, i) => i === editCatIdx ? val : c));
+    if (category === oldName) setCategory(val);
+    setEditCatIdx(null); setEditCatVal("");
+    toast.success("Category renamed ✅");
+  };
+
+  const handleDeleteCat = (idx) => {
+    if (products.some(p => p.category === categories[idx])) {
+      toast.error(`"${categories[idx]}" is used by products — remove them first`);
+      setDeleteCatIdx(null); return;
+    }
+    setCategories(prev => prev.filter((_, i) => i !== idx));
+    setDeleteCatIdx(null);
+    toast.success("Category deleted");
+  };
+
+  /* ═══════════════════════════════════════
+     IMAGE HANDLING
+  ════════════════════════════════════════ */
+  const handleAddImages = (files) => {
+    const arr       = Array.from(files);
+    const remaining = MAX_IMAGES - imageSlots.length;
+    if (remaining <= 0) { toast.error(`Max ${MAX_IMAGES} images allowed`); return; }
+    const toAdd = arr.slice(0, remaining);
+    setImageSlots(prev => [
+      ...prev,
+      ...toAdd.map(file => ({ file, preview: URL.createObjectURL(file), existing: false }))
+    ]);
+    if (arr.length > remaining) toast(`Only first ${remaining} added — max ${MAX_IMAGES}`);
+  };
+
+  const removeImage = (idx) => {
+    setImageSlots(prev => {
+      const copy = [...prev];
+      if (!copy[idx].existing && copy[idx].preview?.startsWith("blob:")) {
+        URL.revokeObjectURL(copy[idx].preview);
       }
+      copy.splice(idx, 1);
+      return copy;
     });
+  };
 
-    const res = await API.post("/products", formData);
+  const moveImage = (from, to) => {
+    if (to < 0 || to >= imageSlots.length) return;
+    setImageSlots(prev => {
+      const copy = [...prev];
+      const [item] = copy.splice(from, 1);
+      copy.splice(to, 0, item);
+      return copy;
+    });
+  };
 
-    console.log("ADD RESPONSE:", res.data);
+  /* ═══════════════════════════════════════
+     VALIDATION
+  ════════════════════════════════════════ */
+  const validate = () => {
+    if (!name.trim())                             { toast.error("Product name is required");          return false; }
+    if (!category)                                { toast.error("Please select a category");          return false; }
+    if (!price || isNaN(price) || +price <= 0)    { toast.error("Enter a valid selling price");       return false; }
+    if (originalPrice && +originalPrice < +price) { toast.error("MRP must be ≥ selling price");       return false; }
+    if (!stock || isNaN(stock) || +stock < 0)     { toast.error("Enter valid stock quantity");        return false; }
+    if (!deliveryDays || +deliveryDays < 1)       { toast.error("Enter valid delivery days (min 1)"); return false; }
+    return true;
+  };
 
-    toast.success("Product added ✅");
+  /* ═══════════════════════════════════════
+     BUILD FORM DATA
+  ════════════════════════════════════════ */
+  const buildForm = () => {
+    const fd = new FormData();
+    fd.append("name",         name.trim());
+    fd.append("description",  description || "");
+    fd.append("price",        Number(price));
+    fd.append("stock",        Number(stock));
+    fd.append("category",     category);
+    fd.append("deliveryDays", Number(deliveryDays) || 5);
+    if (originalPrice) fd.append("originalPrice", Number(originalPrice));
+    if (brand) fd.append("brand", brand.trim());
+    if (sku)   fd.append("sku",   sku.trim());
 
-    resetForm();
-    fetchProducts();
+    // existing Cloudinary URLs
+    const existing = imageSlots.filter(s => s.existing && s.preview).map(s => s.preview);
+    if (existing.length > 0) fd.append("existingImages", JSON.stringify(existing));
 
-  } catch (err) {
-    console.error("ADD ERROR:", err.response?.data || err.message);
-    toast.error(err.response?.data?.message || "Failed to add product");
-  } finally {
-    setFormLoading(false);
-  }
-};
+    // new files to upload
+    imageSlots.filter(s => !s.existing && s.file).forEach(s => fd.append("images", s.file));
 
+    return fd;
+  };
 
-/* ───────────────── UPDATE PRODUCT ───────────────── */
-
-const updateProduct = async (id) => {
-  try {
+  /* ═══════════════════════════════════════
+     ADD PRODUCT
+  ════════════════════════════════════════ */
+  const addProduct = async () => {
+    if (!validate()) return;
     setFormLoading(true);
+    try {
+      await API.post("/products", buildForm());
+      toast.success("Product added ✅");
+      resetForm();
+      fetchProducts();
+    } catch (err) {
+      console.error("ADD ERROR:", err.response?.data || err.message);
+      toast.error(err.response?.data?.message || "Failed to add product");
+    } finally { setFormLoading(false); }
+  };
 
-    const formData = new FormData();
+  /* ═══════════════════════════════════════
+     UPDATE PRODUCT
+  ════════════════════════════════════════ */
+  const updateProduct = async (id) => {
+    if (!validate()) return;
+    setFormLoading(true);
+    try {
+      await API.put(`/products/${id}`, buildForm());
+      toast.success("Product updated ✅");
+      resetForm();
+      fetchProducts();
+    } catch (err) {
+      console.error("UPDATE ERROR:", err.response?.data || err.message);
+      toast.error(err.response?.data?.message || "Failed to update product");
+    } finally { setFormLoading(false); }
+  };
 
-    formData.append("name", name.trim());
-    formData.append("description", description || "");
-    formData.append("price", Number(price));
-    formData.append("originalPrice", originalPrice ? Number(originalPrice) : "");
-    formData.append("stock", Number(stock));
-    formData.append("category", category);
-    formData.append("brand", brand || "");
-    formData.append("sku", sku || "");
-    formData.append("deliveryDays", Number(deliveryDays) || 5);
+  /* ═══════════════════════════════════════
+     DELETE PRODUCT
+  ════════════════════════════════════════ */
+  const deleteProduct = async (id) => {
+    try {
+      await API.delete(`/products/${id}`);
+      toast.success("Product deleted ✅");
+      setDeleteId(null);
+      fetchProducts();
+    } catch (err) {
+      console.error("DELETE ERROR:", err.response?.data || err.message);
+      toast.error("Failed to delete product");
+    }
+  };
 
-    // ✅ IMPORTANT: send existing images
-   const existing = imageSlots
-  .filter(s => s.existing && s.preview)
-  .map(s => s.preview);
+  /* ═══════════════════════════════════════
+     EDIT / RESET
+  ════════════════════════════════════════ */
+  const startEdit = (p) => {
+    setEditingId(p._id);
+    setName(p.name || "");
+    setDescription(p.description || "");
+    setPrice(p.price || "");
+    setOriginalPrice(p.originalPrice || "");
+    setStock(p.stock || "");
+    setCategory(p.category || "");
+    setBrand(p.brand || "");
+    setSku(p.sku || "");
+    setDeliveryDays(p.deliveryDays || "5");
 
-if (existing.length > 0) {
-  formData.append("existingImages", JSON.stringify(existing));
-}
-// ✅ send new images
-    imageSlots.forEach(s => {
-      if (s.file) {
-        formData.append("images", s.file);
-      }
-    });
+    const fromArray  = Array.isArray(p.images) ? p.images : [];
+    const fromSingle = p.image && !fromArray.includes(p.image) ? [p.image] : [];
+    const imgs = [...fromArray, ...fromSingle].filter(Boolean);
+    setImageSlots(imgs.map(url => ({ file: null, preview: url, existing: true })));
 
-    const res = await API.put(`/products/${id}`, formData);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  };
 
-    console.log("UPDATE RESPONSE:", res.data);
+  const resetForm = () => {
+    setEditingId(null);
+    setName(""); setDescription(""); setPrice(""); setOriginalPrice("");
+    setStock(""); setCategory(""); setBrand(""); setSku(""); setDeliveryDays("5");
+    imageSlots.forEach(s => { if (!s.existing && s.preview?.startsWith("blob:")) URL.revokeObjectURL(s.preview); });
+    setImageSlots([]);
+  };
 
-    toast.success("Product updated ✅");
+  /* ── filtered lists ── */
+  const filteredProducts = products.filter(p =>
+    p.name?.toLowerCase().includes(searchProd.toLowerCase()) ||
+    p.category?.toLowerCase().includes(searchProd.toLowerCase()) ||
+    p.brand?.toLowerCase().includes(searchProd.toLowerCase())
+  );
 
-    resetForm();
-    fetchProducts();
+  const filteredCustomers = customers.filter(c =>
+    c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    c.email?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    c.phone?.toString().includes(customerSearch.trim())
+  );
 
-  } catch (err) {
-    console.error("UPDATE ERROR:", err.response?.data || err.message);
-    toast.error(err.response?.data?.message || "Failed to update product");
-  } finally {
-    setFormLoading(false);
-  }
-};
-
-/* ───────────────── DELETE PRODUCT ───────────────── */
-
-const deleteProduct = async (id) => {
-  try {
-    await API.delete(`/products/${id}`);
-
-    toast.success("Product deleted ✅");
-
-    setDeleteId(null);
-    fetchProducts();
-
-  } catch (err) {
-    console.error("DELETE ERROR:", err.response?.data || err.message);
-    toast.error("Failed to delete product");
-  }
-};
-
-
-/* ───────────────── EDIT PRODUCT ───────────────── */
-
-const startEdit = (p) => {
-  console.log("EDIT PRODUCT DATA:", p);
-  console.log("IMAGES:", p.images);
-
-  setEditingId(p._id);
-
-  setName(p.name);
-  setDescription(p.description);
-  setPrice(p.price);
-  setOriginalPrice(p.originalPrice || "");
-  setStock(p.stock);
-  setCategory(p.category);
-  setBrand(p.brand || "");
-  setSku(p.sku || "");
-  setDeliveryDays(p.deliveryDays || 5);
-
-  // ✅ FIX HERE
-  const imgs = (p.images || [])
-    .filter(url => url && url.trim() !== "")   // 🔥 remove empty images
-    .map(url => ({
-      preview: url,
-      existing: true
-    }));
-
-  setImageSlots(imgs);
-};
-
-/* ───────────────── RESET FORM ───────────────── */
-
-const resetForm = () => {
-  setEditingId(null);
-
-  setName("");
-  setDescription("");
-  setPrice("");
-  setOriginalPrice("");
-  setStock("");
-  setCategory("");
-  setBrand("");
-  setSku("");
-  setDeliveryDays("5");
-
-  setImageSlots([]);
-};
-
-
-/* ───────────────── IMAGE HANDLING ───────────────── */
-
-const removeImage = (idx) => {
-  setImageSlots(prev => prev.filter((_, i) => i !== idx));
-};
-
-const moveImage = (from, to) => {
-  if (to < 0 || to >= imageSlots.length) return;
-
-  const updated = [...imageSlots];
-  const [item] = updated.splice(from, 1);
-  updated.splice(to, 0, item);
-
-  setImageSlots(updated);
-};
-
-const handleAddImages = (files) => {
-  const arr = Array.from(files);
-  const remaining = MAX_IMAGES - imageSlots.length;
-
-  if (remaining <= 0) {
-    toast.error(`Max ${MAX_IMAGES} images allowed`);
-    return;
-  }
-
-  const toAdd = arr.slice(0, remaining);
-
-  setImageSlots(prev => [
-    ...prev,
-    ...toAdd.map(file => ({
-      file,
-      preview: URL.createObjectURL(file),
-      existing: false
-    }))
-  ]);
-
-  if (arr.length > remaining) {
-    toast(`Only first ${remaining} added`);
-  }
-};
-
-
-/* ───────────────── FILTERS ───────────────── */
-
-const filteredProducts = (products || []).filter(p =>
-  p.name?.toLowerCase().includes(searchProd.toLowerCase()) ||
-  p.category?.toLowerCase().includes(searchProd.toLowerCase()) ||
-  p.brand?.toLowerCase().includes(searchProd.toLowerCase())
-);
-
-const filteredCustomers = (customers || []).filter(c =>
-  c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-  c.email?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-  c.phone?.toString().includes(customerSearch.trim())
-);
-
-  const catColor = (cat) => CAT_COLORS[categories.indexOf(cat) % CAT_COLORS.length] || "#f0f0f0";
-  const discP    = (orig, sell) => orig > sell ? Math.round(((orig - sell) / orig) * 100) : 0;
-  const formatDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
-  const initials = (n) => n?.trim().split(" ").map(x => x[0]).join("").toUpperCase().slice(0, 2) || "?";
+  const catColor  = (cat)       => CAT_COLORS[categories.indexOf(cat) % CAT_COLORS.length] || "#f0f0f0";
+  const discP     = (orig, sell) => orig > sell ? Math.round(((orig - sell) / orig) * 100) : 0;
+  const formatDate= (d)         => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+  const initials  = (n)         => n?.trim().split(" ").map(x => x[0]).join("").toUpperCase().slice(0, 2) || "?";
 
   const inp = { width: "100%", padding: "11px 14px", border: "2px solid #e5e5e5", borderRadius: "8px", fontSize: "14px", color: "#111", background: "white", outline: "none", transition: "border-color 0.15s", boxSizing: "border-box", fontFamily: "'DM Sans', sans-serif" };
   const lbl = { display: "block", fontSize: "11px", fontWeight: "800", color: "#555", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "7px" };
@@ -382,7 +344,7 @@ const filteredCustomers = (customers || []).filter(c =>
               style={{ padding: "10px 16px", background: showCatPanel ? "#FEE12B" : "rgba(255,255,255,0.08)", color: showCatPanel ? "#111" : "white", border: `1px solid ${showCatPanel ? "#FEE12B" : "rgba(255,255,255,0.15)"}`, borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif" }}>
               🗂️ Categories {showCatPanel ? "▲" : "▼"}
             </button>
-            <button onClick={() => { setShowCustomers(v => !v); }}
+            <button onClick={() => setShowCustomers(v => !v)}
               style={{ padding: "10px 16px", background: showCustomers ? "#FEE12B" : "rgba(255,255,255,0.08)", color: showCustomers ? "#111" : "white", border: `1px solid ${showCustomers ? "#FEE12B" : "rgba(255,255,255,0.15)"}`, borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif" }}>
               👥 Customers {showCustomers ? "▲" : "▼"}
             </button>
@@ -400,7 +362,7 @@ const filteredCustomers = (customers || []).filter(c =>
 
       <div style={{ maxWidth: "1400px", margin: "0 auto", padding: isMobile ? "16px" : "28px 40px" }}>
 
-        {/* CATEGORY PANEL */}
+        {/* ── CATEGORY PANEL ── */}
         {showCatPanel && (
           <div style={{ background: "white", borderRadius: "12px", padding: isMobile ? "18px 14px" : "24px", border: "2px solid #FEE12B", marginBottom: "20px", boxShadow: "0 4px 20px rgba(254,225,43,0.15)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
@@ -456,7 +418,8 @@ const filteredCustomers = (customers || []).filter(c =>
                 <h3 style={{ fontWeight: "900", fontSize: "16px", color: "#111", margin: "0 0 2px" }}>👥 Customer Accounts</h3>
                 <p style={{ fontSize: "12px", color: "#aaa", margin: 0, fontWeight: "600" }}>{customers.length} registered customer{customers.length !== 1 ? "s" : ""}</p>
               </div>
-              <button onClick={fetchProducts} style={{ padding: "8px 14px", background: "#f7f7f5", border: "1px solid #eee", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+              <button onClick={fetchCustomers}
+                style={{ padding: "8px 14px", background: "#f7f7f5", border: "1px solid #eee", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                 🔄 Refresh
               </button>
             </div>
@@ -464,13 +427,9 @@ const filteredCustomers = (customers || []).filter(c =>
             {/* Customer stats */}
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, 1fr)", gap: "12px", marginBottom: "18px" }}>
               {[
-                { label: "Total Customers", value: customers.length,                                                       icon: "👥", color: "#2563eb" },
-                { label: "With Phone",       value: customers.filter(c => c.phone).length,                                  icon: "📱", color: "#16a34a" },
-                { label: "This Month",       value: customers.filter(c => {
-  const d = new Date(c.createdAt);
-  return d.getMonth() === now.getMonth() &&
-         d.getFullYear() === now.getFullYear();
-}).length, icon: "🆕", color: "#7c3aed" },
+                { label: "Total Customers", value: customers.length,                                                                                                                              icon: "👥", color: "#2563eb" },
+                { label: "With Phone",      value: customers.filter(c => c.phone).length,                                                                                                         icon: "📱", color: "#16a34a" },
+                { label: "This Month",      value: customers.filter(c => { const d = new Date(c.createdAt); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); }).length, icon: "🆕", color: "#7c3aed" },
               ].map((s, i) => (
                 <div key={i} style={{ background: "#F7F7F5", borderRadius: "10px", padding: "14px 16px", display: "flex", alignItems: "center", gap: "12px" }}>
                   <span style={{ fontSize: "22px" }}>{s.icon}</span>
@@ -485,12 +444,11 @@ const filteredCustomers = (customers || []).filter(c =>
             {/* Search */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px", border: "1px solid #eee", borderRadius: "8px", padding: "0 14px", background: "#f9f9f9", marginBottom: "14px" }}>
               <span>🔍</span>
-              <input placeholder="Search by name, email or phone..."
-                value={customerSearch} onChange={e => setCustomerSearch(e.target.value)}
+              <input placeholder="Search by name, email or phone..." value={customerSearch} onChange={e => setCustomerSearch(e.target.value)}
                 style={{ border: "none", outline: "none", padding: "10px 0", fontSize: "13px", background: "transparent", flex: 1, fontFamily: "'DM Sans', sans-serif" }} />
             </div>
 
-            {/* Customer table */}
+            {/* Table */}
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "560px" }}>
                 <thead>
@@ -502,7 +460,9 @@ const filteredCustomers = (customers || []).filter(c =>
                 </thead>
                 <tbody>
                   {filteredCustomers.length === 0 ? (
-                    <tr><td colSpan={5} style={{ textAlign: "center", padding: "32px", color: "#aaa", fontSize: "14px" }}>No customers found</td></tr>
+                    <tr><td colSpan={5} style={{ textAlign: "center", padding: "32px", color: "#aaa", fontSize: "14px" }}>
+                      {customers.length === 0 ? "Loading customers..." : "No customers found"}
+                    </td></tr>
                   ) : filteredCustomers.map(c => (
                     <tr key={c._id} style={{ borderBottom: "1px solid #f5f5f5" }}
                       onMouseEnter={e => e.currentTarget.style.background = "#FAFAF8"}
@@ -539,11 +499,11 @@ const filteredCustomers = (customers || []).filter(c =>
         )}
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5, 1fr)", gap: "12px", marginBottom: "20px" }}>
           {[
-            { label: "Products",   value: stats.totalProducts,                   icon: "📦" },
-            { label: "Low Stock",  value: stats.lowStock,                        icon: "⚠️", danger: true },
-            { label: "Categories", value: categories.length,                     icon: "🗂️" },
-            { label: "Inventory Value",    value: `₹${sales.revenue?.toLocaleString()}`, icon: "💰" },
-            { label: "Avg. Price", value: `₹${sales.avgPrice}`,                 icon: "📊" },
+            { label: "Products",         value: stats.totalProducts,                   icon: "📦" },
+            { label: "Low Stock",        value: stats.lowStock,                        icon: "⚠️", danger: true },
+            { label: "Categories",       value: categories.length,                     icon: "🗂️" },
+            { label: "Inventory Value",  value: `₹${sales.revenue?.toLocaleString()}`, icon: "💰" },
+            { label: "Avg. Price",       value: `₹${sales.avgPrice}`,                 icon: "📊" },
           ].map((s, i) => (
             <div key={i} style={{ background: "white", borderRadius: "10px", padding: "14px", display: "flex", alignItems: "center", gap: "12px", border: "1px solid #ececec", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
               <span style={{ fontSize: "20px" }}>{s.icon}</span>
@@ -579,12 +539,11 @@ const filteredCustomers = (customers || []).filter(c =>
                   <tr><td colSpan={6} style={{ textAlign: "center", padding: "40px" }}>
                     <div style={{ width: "28px", height: "28px", border: "3px solid #eee", borderTop: "3px solid #FEE12B", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
                   </td></tr>
-                ) : filteredProducts.length=== 0 ? (
+                ) : filteredProducts.length === 0 ? (
                   <tr><td colSpan={6} style={{ textAlign: "center", padding: "32px", color: "#aaa", fontSize: "14px" }}>No products found</td></tr>
                 ) : filteredProducts.map(p => {
-  const thumb    = p.images?.[0] || p.image || undefined;
-  const imgCount = p.images?.length || (p.image ? 1 : 0);
-
+                  const thumb    = p.images?.[0] || p.image || undefined;
+                  const imgCount = p.images?.length || (p.image ? 1 : 0);
                   return (
                     <tr key={p._id} style={{ borderBottom: "1px solid #f5f5f5" }}
                       onMouseEnter={e => e.currentTarget.style.background = "#FAFAF8"}
@@ -592,8 +551,10 @@ const filteredCustomers = (customers || []).filter(c =>
                       <td style={{ padding: "12px 14px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           <div style={{ position: "relative", flexShrink: 0 }}>
-                            {thumb ? <img src={thumb} alt={p.name} style={{ width: "42px", height: "42px", objectFit: "cover", borderRadius: "8px", border: "1px solid #f0f0f0" }} />
-                              : <div style={{ width: "42px", height: "42px", background: "#f5f5f0", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>📦</div>}
+                            {thumb
+                              ? <img src={thumb} alt={p.name} style={{ width: "42px", height: "42px", objectFit: "cover", borderRadius: "8px", border: "1px solid #f0f0f0" }} />
+                              : <div style={{ width: "42px", height: "42px", background: "#f5f5f0", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>📦</div>
+                            }
                             {imgCount > 1 && <span style={{ position: "absolute", bottom: "-4px", right: "-4px", background: "#FEE12B", color: "#111", fontSize: "9px", fontWeight: "900", padding: "1px 5px", borderRadius: "8px", border: "1px solid white" }}>+{imgCount - 1}</span>}
                           </div>
                           <div style={{ minWidth: 0 }}>
@@ -655,7 +616,14 @@ const filteredCustomers = (customers || []).filter(c =>
                   <select style={inp} value={category} onChange={e => {
                     if (e.target.value === "__new__") {
                       const n = window.prompt("Enter new category name:");
-                      if (n?.trim()) { const val = n.trim(); if (!categories.map(c => c.toLowerCase()).includes(val.toLowerCase())) { setCategories(prev => { const u = [...prev, val]; saveCats(u); return u; }); toast.success(`"${val}" added`); } setCategory(val); }
+                      if (n?.trim()) {
+                        const val = n.trim();
+                        if (!categories.map(c => c.toLowerCase()).includes(val.toLowerCase())) {
+                          setCategories(prev => { const u = [...prev, val]; saveCats(u); return u; });
+                          toast.success(`"${val}" added`);
+                        }
+                        setCategory(val);
+                      }
                     } else { setCategory(e.target.value); }
                   }}>
                     <option value="">Select category</option>
@@ -679,7 +647,9 @@ const filteredCustomers = (customers || []).filter(c =>
                     onFocus={e => e.target.style.borderColor = "#FEE12B"}
                     onBlur={e => e.target.style.borderColor = originalPrice && +originalPrice < +price ? "#e53e3e" : "#e5e5e5"} />
                   {originalPrice && price && +originalPrice > +price && (
-                    <p style={{ fontSize: "11px", color: "#16a34a", fontWeight: "700", margin: "4px 0 0" }}>₹<s>{(+originalPrice).toLocaleString()}</s> → ₹{(+price).toLocaleString()} ({discP(+originalPrice, +price)}% OFF)</p>
+                    <p style={{ fontSize: "11px", color: "#16a34a", fontWeight: "700", margin: "4px 0 0" }}>
+                      ₹<s>{(+originalPrice).toLocaleString()}</s> → ₹{(+price).toLocaleString()} ({discP(+originalPrice, +price)}% OFF)
+                    </p>
                   )}
                 </div>
               </div>
@@ -695,7 +665,11 @@ const filteredCustomers = (customers || []).filter(c =>
                     <input style={{ ...inp, flex: 1 }} placeholder="5" type="number" min="1" max="30" value={deliveryDays} onChange={e => setDeliveryDays(e.target.value)} onFocus={fo} onBlur={bl} />
                     <span style={{ fontSize: "12px", color: "#888", fontWeight: "600", whiteSpace: "nowrap" }}>days</span>
                   </div>
-                  {deliveryDays && <p style={{ fontSize: "11px", color: "#2563eb", fontWeight: "600", margin: "4px 0 0" }}>🚚 Delivers by {(() => { const d = new Date(); d.setDate(d.getDate() + +deliveryDays); return d.toLocaleDateString("en-IN", { day: "numeric", month: "long" }); })()}</p>}
+                  {deliveryDays && (
+                    <p style={{ fontSize: "11px", color: "#2563eb", fontWeight: "600", margin: "4px 0 0" }}>
+                      🚚 Delivers by {(() => { const d = new Date(); d.setDate(d.getDate() + +deliveryDays); return d.toLocaleDateString("en-IN", { day: "numeric", month: "long" }); })()}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -722,7 +696,9 @@ const filteredCustomers = (customers || []).filter(c =>
                 <label style={lbl}>Product Photos</label>
                 <span style={{ fontSize: "11px", color: imageSlots.length >= MAX_IMAGES ? "#e53e3e" : "#aaa", fontWeight: "600" }}>{imageSlots.length}/{MAX_IMAGES}</span>
               </div>
-              
+              <div style={{ background: "#F0FDF4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "8px 12px", marginBottom: "10px", fontSize: "11px", color: "#16a34a", fontWeight: "600" }}>
+                ☁️ Images upload to Cloudinary automatically
+              </div>
               {imageSlots.length < MAX_IMAGES && (
                 <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "2px dashed #FEE12B", borderRadius: "10px", padding: "18px 12px", cursor: "pointer", background: "#FFFDF0", marginBottom: "12px", transition: "background 0.15s" }}
                   onMouseEnter={e => e.currentTarget.style.background = "#FFF8D0"} onMouseLeave={e => e.currentTarget.style.background = "#FFFDF0"}>
@@ -736,15 +712,7 @@ const filteredCustomers = (customers || []).filter(c =>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                   {imageSlots.map((slot, idx) => (
                     <div key={idx} style={{ position: "relative", borderRadius: "8px", overflow: "hidden", border: idx === 0 ? "3px solid #FEE12B" : "2px solid #eee", aspectRatio: "1", background: "#f5f5f0" }}>
-                      <img
-  src={slot.preview || "/placeholder.png"}
-  alt="product"
-  style={{
-    width: "100%",
-    height: "100%",
-    objectFit: "cover"
-  }}
-/>
+                      <img src={slot.preview} alt="product" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                       {idx === 0 && <div style={{ position: "absolute", top: "5px", left: "5px", background: "#FEE12B", color: "#111", fontSize: "9px", fontWeight: "900", padding: "2px 6px", borderRadius: "4px" }}>COVER</div>}
                       {slot.existing && <div style={{ position: "absolute", top: "5px", right: "5px", background: "#22c55e", color: "white", fontSize: "8px", fontWeight: "900", padding: "2px 5px", borderRadius: "4px" }}>☁️</div>}
                       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(0,0,0,0.6)", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 6px" }}>
