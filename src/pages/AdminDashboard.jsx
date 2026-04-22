@@ -203,12 +203,14 @@ const updateProduct = async (id) => {
     formData.append("deliveryDays", Number(deliveryDays) || 5);
 
     // ✅ IMPORTANT: send existing images
-    const existingImages = imageSlots
-      .filter(s => s.existing)
-      .map(s => s.preview);
+   const existing = imageSlots
+  .filter(s => s.existing && s.preview)
+  .map(s => s.preview);
 
-    formData.append("existingImages", JSON.stringify(existingImages));
-    // ✅ send new images
+if (existing.length > 0) {
+  formData.append("existingImages", JSON.stringify(existing));
+}
+// ✅ send new images
     imageSlots.forEach(s => {
       if (s.file) {
         formData.append("images", s.file);
