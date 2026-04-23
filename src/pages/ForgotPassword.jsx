@@ -149,10 +149,9 @@ const handleResetPassword = async () => {
 
   try {
     await API.post("/auth/forgot-password/reset", {
-      email: email.trim().toLowerCase(),
-      otp: otp.trim(),          // ✅ REQUIRED
-      newPassword: newPass,     // ✅ REQUIRED
-    });
+  email,
+  newPassword
+});
 
     toast.success("Password reset successful 🎉");
 
