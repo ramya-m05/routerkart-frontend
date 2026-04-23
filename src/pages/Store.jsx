@@ -104,7 +104,20 @@ function Store() {
 
                   {/* IMAGE */}
                   <div style={{ position: "relative", overflow: "hidden", borderRadius: "6px", background: "#f5f5f0" }}>
-                    <img src={p.image || undefined} alt={p.name} style={{ width: "100%", height: isMobile ? "120px" : "160px", objectFit: "cover", borderRadius: "6px", display: "block" }} />
+                    <img
+  src={p.images?.[0] || "/placeholder.png"}
+  alt={p.name}
+  style={{
+    width: "100%",
+    height: isMobile ? "120px" : "160px",
+    objectFit: "cover",
+    borderRadius: "6px",
+    display: "block"
+  }}
+  onError={(e) => {
+    e.target.src = "/placeholder.png";
+  }}
+/>
                     {p.stock <= 3 && (
                       <span style={{ position: "absolute", bottom: "6px", left: "6px", background: "#FEE12B", color: "#111", padding: "3px 7px", borderRadius: "3px", fontSize: "9px", fontWeight: "800" }}>⚡ {p.stock} left</span>
                     )}
