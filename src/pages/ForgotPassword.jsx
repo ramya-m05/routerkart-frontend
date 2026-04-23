@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import toast from "react-hot-toast";
 import { useIsMobile } from "../hooks/useIsMobile";
-import { Resend } from 'resend';
 /* ── Steps ── */
 const STEP = {
   EMAIL: "email",    // enter email
@@ -66,7 +65,7 @@ function ForgotPassword() {
     setLoading(true);
     try {
       await API.post("/auth/forgot-password/send-otp", {
-        email: email.trim().toLowerCase(),
+        email
       });
       toast.success("OTP sent to " + email + " 📧");
       setStep(STEP.OTP);
@@ -113,14 +112,12 @@ const handleVerifyOtp = async () => {
   try {
     const res = await API.post("/auth/forgot-password/verify-otp", {
       email: email.trim().toLowerCase(),
-      otp: otp.trim(),
+      otp: otp.trim(),   // ✅ FIX ADDED
     });
 
-    // ✅ store reset token from backend
     localStorage.setItem("resetToken", res.data.resetToken);
 
     toast.success("OTP verified successfully ✅");
-
     setStep(STEP.RESET);
 
   } catch (err) {
@@ -129,7 +126,6 @@ const handleVerifyOtp = async () => {
     setLoading(false);
   }
 };
-
 
 /* ── STEP 3: Reset password ── */
 const handleResetPassword = async () => {
