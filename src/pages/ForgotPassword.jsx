@@ -141,23 +141,21 @@ const handleResetPassword = async () => {
     return toast.error("Passwords do not match");
   }
 
-  if (!otp || otp.length !== 6) {
-    return toast.error("Enter valid OTP");
-  }
-
   setLoading(true);
 
   try {
     await API.post("/auth/forgot-password/reset", {
-  email,
-  newPassword
-});
+      email: email.trim().toLowerCase(),
+      newPassword: newPass
+    });
 
     toast.success("Password reset successful 🎉");
-
     setStep(STEP.DONE);
 
   } catch (err) {
+    console.log("RESET ERROR FULL:", err);
+    console.log("RESET ERROR DATA:", err.response?.data);
+
     toast.error(err.response?.data?.message || "Reset failed");
   } finally {
     setLoading(false);
