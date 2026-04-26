@@ -109,7 +109,7 @@ function AddressModal({ existing, onSave, onClose }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
           <div>
             <label style={lbl}>Cross / Street</label>
-            <input placeholder="e.g. 5th Cross, MG Road" value={form.cross || ""} onChange={e => set("cross", e.target.value)} style={inp} onFocus={fo} onBlur={bl} />
+            <input placeholder="e.g. 5th Cross" value={form.cross || ""} onChange={e => set("cross", e.target.value)} style={inp} onFocus={fo} onBlur={bl} />
           </div>
           <div>
             <label style={lbl}>Landmark <span style={{ color: "#aaa", fontWeight: "500", textTransform: "none", letterSpacing: 0 }}>(Optional)</span></label>
@@ -121,7 +121,7 @@ function AddressModal({ existing, onSave, onClose }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
           <div>
             <label style={lbl}>City <span style={{ color: "#e53e3e" }}>*</span></label>
-            <input placeholder="e.g. Bangalore" value={form.city || ""} onChange={e => set("city", e.target.value)} style={inp} onFocus={fo} onBlur={bl} />
+            <input placeholder="e.g. MG Road" value={form.city || ""} onChange={e => set("city", e.target.value)} style={inp} onFocus={fo} onBlur={bl} />
           </div>
           <div>
             <label style={lbl}>District <span style={{ color: "#e53e3e" }}>*</span></label>

@@ -147,7 +147,7 @@ function Signup() {
           <div style={{ marginBottom: "16px" }}>
             <label style={lbl}>
               Phone Number
-              <span style={{ color: "#aaa", fontWeight: "500", textTransform: "none", letterSpacing: 0, marginLeft: "6px" }}>(Optional)</span>
+              <span style={{ color: "#e53e3e" }}>*</span>
             </label>
             <div style={{ position: "relative" }}>
               <span style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", fontSize: "13px", fontWeight: "700", color: "#555", pointerEvents: "none" }}>+91</span>

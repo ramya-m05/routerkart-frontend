@@ -18,6 +18,7 @@ function Store() {
   const [loading, setLoading] = useState(true);
   const location = useLocation();
   const isMobile = useIsMobile();
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => { fetchProducts(); }, []);
   useEffect(() => {
@@ -26,12 +27,18 @@ function Store() {
   }, [location]);
 
   const fetchProducts = async () => {
-    try {
-      const res = await API.get("/products");
-      setProducts(Array.isArray(res.data) ? res.data : []);
-    } catch (err) { console.log(err); }
-    finally { setLoading(false); }
-  };
+  try {
+    const res = await API.get("/products");
+
+    console.log("PRODUCTS FROM API:", res.data); // 👈 ADD THIS
+
+    setProducts(Array.isArray(res.data) ? res.data : []);
+  } catch (err) {
+    console.log(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
  const filtered = products
   .filter(
@@ -94,6 +101,7 @@ function Store() {
               const cartItem = cart.find(i => i._id === p._id);
               const wishItem = wishlist.find(i => i._id === p._id);
 
+
               return (
                 <div
                   key={p._id}
@@ -105,14 +113,24 @@ function Store() {
                   {/* IMAGE */}
                   <div style={{ position: "relative", overflow: "hidden", borderRadius: "6px", background: "#f5f5f0" }}>
                     <img
-  src={p.images?.[0] || "/placeholder.png"}
+src={
+  Array.isArray(p.images) &&
+  p.images.length > 0 &&
+  p.images[0] &&
+  p.images[0].trim() !== ""
+    ? p.images[0].startsWith("http")
+      ? p.images[0]
+      : `${API_URL}/${p.images[0]}`
+    : "https://via.placeholder.com/300?text=No+Image"
+}
   alt={p.name}
   style={{
     width: "100%",
-    height: isMobile ? "120px" : "160px",
-    objectFit: "cover",
+    height: isMobile ? "140px" : "220px",
+    objectFit: "contain",
     borderRadius: "6px",
-    display: "block"
+    display: "block",
+    background:"#fff"
   }}
   onError={(e) => {
     e.target.src = "/placeholder.png";

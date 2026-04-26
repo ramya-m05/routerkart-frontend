@@ -53,8 +53,13 @@ function ProductCarousel({ title, products }) {
               >
                 {/* IMAGE */}
                 <div style={styles.imgWrap}>
-                  {p.image ? <img src={p.image} alt={p.name} style={styles.img} /> : <div style={{ ...styles.img, background: "#f0f0f0", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: "32px" }}>📦</span></div>}
-                  {p.stock <= 3 && <span style={styles.stockBadge}>⚡ {p.stock} left</span>}
+                  {Array.isArray(p.images) && p.images[0] ? (
+  <img src={p.images[0]} alt={p.name} style={styles.img} />
+) : (
+  <div style={{ ...styles.img, background: "#f0f0f0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <span style={{ fontSize: "32px" }}>📦</span>
+  </div>
+)}
                   <button
                     onClick={e => { e.stopPropagation(); wishItem ? removeFromWishlist(p._id) : addToWishlist(p); }}
                     style={styles.wishBtn}
@@ -190,7 +195,7 @@ const styles = {
   img: {
     width: "100%",
     height: "140px",
-    objectFit: "cover",
+    objectFit: "contain",
     display: "block",
     transition: "transform 0.3s ease"
   },
