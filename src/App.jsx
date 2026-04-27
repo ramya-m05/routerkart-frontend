@@ -35,6 +35,7 @@ import Support            from "./pages/Support";
 import Refund             from "./pages/Refund";
 import Cancellation       from "./pages/Cancellation";  
 import Contact            from "./pages/ContactUs";
+import ReturnPolicy       from "./pages/ReturnPolicy";
 function App() {
   return (
     <CartProvider>
@@ -72,6 +73,7 @@ function App() {
             <Route path="/refund" element={<Refund />} />
 <Route path="/cancellation" element={<Cancellation />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/return-policy" element={<ReturnPolicy />} />
             {/* ── Protected user routes ── */}
             <Route path="/cart"          element={<ProtectedRoute><Cart /></ProtectedRoute>} />
             <Route path="/checkout"      element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
