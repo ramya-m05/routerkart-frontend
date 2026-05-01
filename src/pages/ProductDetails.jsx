@@ -230,7 +230,7 @@ function ProductDetails() {
     const token = localStorage.getItem("token");
     if (!token || !id) return;
     setCheckingBought(true);
-    API.get("/orders/my")
+    API.get("/orders")
       .then(res => {
         const bought = res.data.some(o =>
   o.items?.some(i =>
