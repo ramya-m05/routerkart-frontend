@@ -151,9 +151,11 @@ function Home() {
                 <p style={{ color: "white", fontWeight: "800", fontSize: "12px", letterSpacing: "1px", textTransform: "uppercase", margin: "0 0 12px" }}>Company</p>
                 {[
                   { label: "About Us",   to: "/about" },
-                  { label: "Privacy",    to: "/privacy" },
+                  { label: "Privacy Policy",    to: "/privacy-policy" },
+                  {label: "Return Policy", to: "/return-policy" },
                   { label: "Terms",      to: "/terms" },
                   { label: "Support",    to: "/support" },
+                  { label: "Contact Us", to: "/contact" },
                 ].map(l => (
                   <Link key={l.label} to={l.to} style={{ display: "block", color: "#555", textDecoration: "none", fontSize: "13px", fontWeight: "500", marginBottom: "8px", transition: "color 0.15s" }}
                     onMouseEnter={e => e.target.style.color = "#FEE12B"} onMouseLeave={e => e.target.style.color = "#555"}>
@@ -196,8 +198,9 @@ function Home() {
             <p style={{ color: "#333", fontSize: "12px", margin: 0 }}>© 2026 RouterKart. All rights reserved.</p>
             <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
               {[
-                { label: "Privacy",      to: "/privacy" },
+                { label: "Privacy Policy",      to: "/privacy-policy" },
                 { label: "Terms",        to: "/terms" },
+                {label: "Return Policy", to: "/return-policy" },
                 { label: "Refund",       to: "/terms#refund-policy" },
                 { label: "Cancellation", to: "/terms#cancellation-policy" },
               ].map(l => (

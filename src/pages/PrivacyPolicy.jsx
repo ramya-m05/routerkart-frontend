@@ -7,6 +7,7 @@ const CONTACT      = "admin@routerkart.in";
 function PrivacyPolicy() {
   const isMobile = useIsMobile();
 
+  console.log("PRIVACY PAGE LOADED");
   return (
     <div style={{ background: "#F7F7F5", minHeight: "100vh", fontFamily: "'DM Sans', sans-serif" }}>
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 import { Link } from "react-router-dom";
@@ -12,6 +13,7 @@ const STATUS_STYLE = {
 };
 
 function Orders() {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
@@ -138,8 +140,54 @@ function Orders() {
   />
 ) : null}
                             <div style={{ flex: 1 }}>
-                              <p style={{ fontWeight: "700", fontSize: "14px", color: "#111", margin: "0 0 2px" }}>{item.name}</p>
+                              <p
+  onClick={() => {
+  const productId = item.productId || item.product;
+
+  if (!productId) {
+    console.error("❌ No product ID found in order item", item);
+    return;
+  }
+
+  navigate(`/product/${productId}`);
+}}
+  style={{
+    fontWeight: "700",
+    fontSize: "14px",
+    color: "#111",
+    margin: "0 0 2px",
+    cursor: "pointer"
+  }}
+>
+  {item.name}
+</p>
                               <p style={{ fontSize: "12px", color: "#aaa", margin: 0 }}>Qty: {item.qty} × ₹{item.price?.toLocaleString()}</p>
+                              {order.status?.toLowerCase() === "delivered" && (
+  <button
+    onClick={() => {
+      const productId = item.productId || item.product;
+
+      if (!productId) {
+        console.error("❌ No product ID found in order item", item);
+        return;
+      }
+
+      navigate(`/product/${productId}?review=true`);
+    }}
+    style={{
+      marginTop: "6px",
+      padding: "6px 10px",
+      background: "#FEE12B",
+      border: "none",
+      borderRadius: "6px",
+      fontWeight: "700",
+      cursor: "pointer",
+      fontSize: "12px"
+    }}
+  >
+    ⭐ Write Review
+  </button>
+)}
                             </div>
                             <span style={{ fontWeight: "800", fontSize: "14px", color: "#111" }}>
                               ₹{(item.price * item.qty).toLocaleString()}

@@ -34,7 +34,7 @@ import TermsAndConditions from "./pages/TermsAndConditions";
 import Support            from "./pages/Support";
 import Refund             from "./pages/Refund";
 import Cancellation       from "./pages/Cancellation";  
-import Contact            from "./pages/ContactUs";
+import Contact            from "./pages/Contact";
 import ReturnPolicy       from "./pages/ReturnPolicy";
 function App() {
   return (
@@ -67,7 +67,7 @@ function App() {
 
             {/* ── Info pages (public) ── */}
             <Route path="/about"   element={<About />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms"   element={<TermsAndConditions />} />
             <Route path="/support" element={<Support />} />
             <Route path="/refund" element={<Refund />} />

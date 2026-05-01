@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 
-function OrderHistory(){
+
+function OrderHistory() {
+
+  const navigate = useNavigate();
 
   const [orders,setOrders] = useState([]);
 
@@ -32,8 +36,25 @@ function OrderHistory(){
 
             {order.items.map((item,i)=>(
               <div key={i} style={row}>
-                <span>{item.name} x {item.qty}</span>
+
+                <div>
+                  <span>{item.name} x {item.qty}</span>
+
+                  {/* ✅ Review button per product */}
+                  {order.status === "Delivered" && (
+                    <button
+                      onClick={() =>
+                        navigate(`/product/${item.productId || item.product || item._id}?review=true`)
+                      }
+                      style={btn}
+                    >
+                      ⭐ Write Review
+                    </button>
+                  )}
+                </div>
+
                 <span>₹{item.price * item.qty}</span>
+
               </div>
             ))}
 
@@ -48,6 +69,16 @@ function OrderHistory(){
   );
 }
 
+const btn = {
+  marginTop: "6px",
+  padding: "6px 10px",
+  background: "#FEE12B",
+  border: "none",
+  borderRadius: "6px",
+  fontWeight: "700",
+  cursor: "pointer",
+  display: "block"
+};
 const card = {
   background:"white",
   padding:"20px",

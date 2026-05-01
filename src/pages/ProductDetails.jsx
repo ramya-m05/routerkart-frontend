@@ -232,9 +232,13 @@ function ProductDetails() {
     setCheckingBought(true);
     API.get("/orders/my")
       .then(res => {
-        const bought = (Array.isArray(res.data) ? res.data : []).some(o =>
-          Array.isArray(o.items) && o.items.some(i => i.productId === id || i.productId?._id === id)
-        );
+        const bought = res.data.some(o =>
+  o.items?.some(i =>
+    (i.productId || i.product)?._id === id ||
+    i.productId === id ||
+    i.product === id
+  )
+);
         setHasBought(bought);
         const uName = localStorage.getItem("userName") || "";
         if (bought && uName) setUserReviewDone(reviews.some(r => r.name === uName));
@@ -249,7 +253,15 @@ function ProductDetails() {
     setSubmitting(true);
     try {
       const name = localStorage.getItem("userName") || "Customer";
-      await API.post(`/products/${id}/reviews`, { name, rating: reviewRating, comment: reviewComment.trim() });
+      await API.post(
+  `/products/${id}/review`,
+  { rating: reviewRating, comment: reviewComment.trim() },
+  {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`
+    }
+  }
+);
       toast.success("Review submitted ✅");
       setReviewComment(""); setReviewRating(5); setUserReviewDone(true);
       API.get(`/products/${id}/reviews`).then(r => setReviews(Array.isArray(r.data) ? r.data : [])).catch(() => {});
