@@ -4,6 +4,15 @@ import { useIsMobile } from "../hooks/useIsMobile";
 
 const slides = [
   { tag: "Limited Time Deal", title: "Buy More,\nSave More", subtitle: "Up to ₹1000 OFF on selected routers", cta: "Shop Now", link: "/store?category=Router", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" },
+  {
+  tag: "Bulk Deals",
+  title: "GPON & XPON\nBulk Orders",
+  subtitle: "Best pricing for ISPs, resellers & installers",
+  bulk: "⚡ Special bulk discounts available — Contact us directly",
+  cta: "Enquire Now",
+  link: "/contact", // or WhatsApp later
+  image: "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?w=600&q=80"
+},
   { tag: "New Arrivals", title: "Upgrade Your\nNetwork", subtitle: "Latest routers & fiber tools in stock", cta: "Explore", link: "/store", image: "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=600&q=80" },
   { tag: "Security", title: "Protect What\nMatters", subtitle: "IP cameras, NVRs & complete security kits", cta: "View Security", link: "/store?category=Security", image: "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=600&q=80" },
 ];

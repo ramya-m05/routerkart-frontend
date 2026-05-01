@@ -232,11 +232,12 @@ function ProductDetails() {
     setCheckingBought(true);
     API.get("/orders")
       .then(res => {
-        const bought = res.data.some(o =>
+    const bought = res.data.some(o =>
+  o.status?.toLowerCase() === "delivered" &&
   o.items?.some(i =>
-    (i.productId || i.product)?._id === id ||
-    i.productId === id ||
-    i.product === id
+    (i.productId?.toString() === id) ||
+    (i.product?.toString() === id) ||
+    (i.product?._id === id)
   )
 );
         setHasBought(bought);
