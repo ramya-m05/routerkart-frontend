@@ -128,8 +128,12 @@ const placeOrder = async () => {
       })),
     });
 
-    // ✅ STEP 2: CREATE ORDER (RAZORPAY)
-    const { data } = await API.post("/payment/create-order", { amount });
+    // ✅ STEP 2: CREATE ORDER (RAZORPAY) — Server calculates exact amount from database prices
+    const { data } = await API.post("/payment/create-order", {
+      items: cart.map((i) => ({ productId: i._id, qty: i.qty })),
+      paymentMode,
+      amount,
+    });
 
     console.log("ORDER DATA:", data);
 
