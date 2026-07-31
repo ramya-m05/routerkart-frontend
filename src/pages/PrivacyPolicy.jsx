@@ -26,7 +26,7 @@ function PrivacyPolicy() {
         </InfoBox>
 
         <Section title="About RouterKart">
-          <p>RouterKart is an online retail platform for networking equipment — routers, fiber cables, fiber tools, security systems, and streaming devices — operated from Bengaluru, Karnataka, India.</p>
+          <p>RouterKart is an online retail platform for networking equipment — routers, fiber cables, fiber tools, security systems, and streaming devices — operated from #132, Ramanna Garden, New Mission Road, O T C Road, Chamaraj Pet, Bangalore South, Wilson Garden, Bangalore, Karnataka - 560027.</p>
           <p>You can contact us at <a href={`mailto:${CONTACT}`} style={{ color: "#111", fontWeight: "700" }}>{CONTACT}</a> for any privacy-related concerns.</p>
         </Section>
 
@@ -163,7 +163,8 @@ function ContactCard() {
       <p style={{ color: "white", fontWeight: "900", fontSize: "16px", margin: "0 0 10px" }}>Router<span style={{ color: "#FEE12B" }}>Kart</span></p>
       <p style={{ color: "#aaa", fontSize: "13px", margin: "0 0 4px" }}>📧 <a href="mailto:admin@routerkart.in" style={{ color: "#FEE12B", textDecoration: "none" }}>admin@routerkart.in</a></p>
       <p style={{ color: "#aaa", fontSize: "13px", margin: "0 0 4px" }}>🌐 <a href="https://routerkart.in" target="_blank" rel="noopener noreferrer" style={{ color: "#FEE12B", textDecoration: "none" }}>routerkart.in</a></p>
-      <p style={{ color: "#aaa", fontSize: "13px", margin: 0 }}>📍 Bengaluru, Karnataka, India</p>
+      <p style={{ color: "#aaa", fontSize: "13px", margin: "0 0 4px" }}>📍 #132, Ramanna Garden, New Mission Road, O T C Road, Chamaraj Pet, Bangalore South, Wilson Garden, Bangalore, Karnataka - 560027</p>
+      <p style={{ color: "#aaa", fontSize: "13px", margin: 0 }}>📞 +91 80739 19667</p>
     </div>
   );
 }

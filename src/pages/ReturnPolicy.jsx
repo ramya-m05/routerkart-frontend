@@ -27,7 +27,7 @@ const ReturnPolicy = () => {
       </ul>
 
       <h3>Contact</h3>
-      <p>Email: support@routerkart.in</p>
+      <p>Email: admin@routerkart.in</p>
     </div>
   );
 };

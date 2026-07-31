@@ -21,7 +21,7 @@ const FAQS = [
   },
   {
     q: "I received a wrong or damaged product. What do I do?",
-    a: "Please email admin@routerkart.in within 3 days of delivery with your Order ID and photos of the issue. We'll arrange a return pickup and process your refund or replacement within 5–7 business days.",
+    a: "Please email admin@routerkart.in within 7 days of delivery with your Order ID and photos of the issue. We'll arrange a return pickup and process your refund or replacement within 5–7 business days.",
   },
   {
     q: "How long does a refund take?",

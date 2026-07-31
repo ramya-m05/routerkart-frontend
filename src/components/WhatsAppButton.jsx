@@ -2,7 +2,7 @@
 // Drop this anywhere inside your App (e.g. right before </CartProvider> in App.jsx)
 // Set WHATSAPP_NUMBER to your business WhatsApp number with country code (no + or spaces)
 
-const WHATSAPP_NUMBER = "8073919667"; // ← Replace with your actual number
+const WHATSAPP_NUMBER = "918073919667"; // ← Replace with your actual number
 const WHATSAPP_MESSAGE = "Hi RouterKart! I need help with a product.";
 
 function WhatsAppButton() {

@@ -119,7 +119,7 @@ function TermsAndConditions() {
 
           <Section title="How to Raise a Refund Request">
             <ol>
-              <li style={{ marginBottom: "8px" }}>Email us at <a href="mailto:admin@routerkart.in" style={{ color: "#111", fontWeight: "700" }}>admin@routerkart.in</a> within <strong>3 days of delivery</strong>.</li>
+              <li style={{ marginBottom: "8px" }}>Email us at <a href="mailto:admin@routerkart.in" style={{ color: "#111", fontWeight: "700" }}>admin@routerkart.in</a> within <strong>7 days of delivery</strong>.</li>
               <li style={{ marginBottom: "8px" }}>Include your Order ID, a description of the issue, and clear photographs of the product.</li>
               <li style={{ marginBottom: "8px" }}>Our team will review your request within 48 business hours.</li>
               <li>If approved, a return pickup will be arranged or you will be asked to self-ship the product.</li>
@@ -129,7 +129,7 @@ function TermsAndConditions() {
           <Section title="Refund Timeline">
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: "12px", marginTop: "4px" }}>
               {[
-                { step: "1", label: "Request raised", time: "Within 3 days of delivery" },
+                { step: "1", label: "Request raised", time: "Within 7 days of delivery" },
                 { step: "2", label: "Review & approval", time: "1–2 business days" },
                 { step: "3", label: "Refund processed", time: "5–7 business days" },
               ].map((s, i) => (
@@ -211,7 +211,8 @@ function TermsAndConditions() {
           <p>For any questions regarding these policies:</p>
           <p>📧 <a href="mailto:admin@routerkart.in" style={{ color: "#111", fontWeight: "700" }}>admin@routerkart.in</a></p>
           <p>🌐 <a href="https://routerkart.in" style={{ color: "#111", fontWeight: "700" }}>routerkart.in</a></p>
-          <p>📍 Bengaluru, Karnataka, India</p>
+          <p>📍 #132, Ramanna Garden, New Mission Road, O T C Road, Chamaraj Pet, Bangalore South, Wilson Garden, Bangalore, Karnataka - 560027</p>
+          <p>📞 +91 80739 19667</p>
         </Section>
 
         <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "8px" }}>

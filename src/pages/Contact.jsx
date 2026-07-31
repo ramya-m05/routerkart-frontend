@@ -343,8 +343,8 @@ export default function Contact() {
             icon={<IconLocation />}
             label="Visit us"
             title="Our Location"
-            value="Bengaluru, Karnataka"
-            sub="India — 560001"
+            value="#132, Ramanna Garden, New Mission Road"
+            sub="Chamaraj Pet, Bangalore, Karnataka - 560027"
           />
           <InfoCard
             icon={<IconClock />}
@@ -357,26 +357,28 @@ export default function Contact() {
 
         {/* WhatsApp Banner */}
         <div style={styles.waBanner}>
-          <div style={styles.waLeft}>
-            <div style={styles.waIconBox}>
-              <IconWA />
-            </div>
-            <div>
-              <div style={styles.waTitle}>Chat on WhatsApp</div>
-              <div style={styles.waSub}>
-                Fastest way to reach us — usually reply in minutes
-              </div>
-            </div>
-          </div>
-          <button
-            style={styles.waBtn}
-            onClick={() =>
-              window.open("https://wa.me/918073919667", "_blank")
-            }
-          >
-            Open WhatsApp
-          </button>
-        </div>
+  <div style={styles.waLeft}>
+    <div style={styles.waIconBox}>
+      <IconWA />
+    </div>
+
+    <div>
+      <div style={styles.waTitle}>Chat on WhatsApp</div>
+
+      <div style={styles.waSub}>
+        Fastest way to reach us — usually reply in minutes
+      </div>
+    </div>
+  </div>
+<button
+  style={styles.waBtn}
+  onClick={() => {
+    window.location.href =
+      "https://api.whatsapp.com/send?phone=918073919667&text=Hi%20RouterKart!%20I%20need%20help%20with%20a%20product.";
+  }}
+>
+NEW WHATSAPP BUTTON</button>
+</div>
 
         <div style={styles.divider} />
 

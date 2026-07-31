@@ -20,8 +20,8 @@ function About() {
 
         {/* WHO WE ARE */}
         <Section title="Who We Are">
-          <p>RouterKart is India's trusted online store for networking equipment — routers, fiber cables, fiber tools, security systems, and streaming devices. Based in Bengaluru, we started with a single mission: make reliable networking gear accessible to every home, office, and ISP technician across the country.</p>
-          <p>We source directly from trusted distributors and brands so every product on our platform is genuine, warranty-backed, and competitively priced.</p>
+          <p>RouterKart is India's trusted online store for networking equipment — routers, fiber cables, fiber tools, security systems, and streaming devices. Based in Bangalore, we started with a single mission: make reliable networking gear accessible to every home, office, and ISP technician across the country.</p>
+          <p>We work directly with major manufacturers to ensure that every product we ship is 100% genuine and comes with the full brand warranty.</p>
         </Section>
 
         {/* MISSION */}
@@ -77,9 +77,9 @@ function About() {
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "12px", marginTop: "8px" }}>
             {[
               { label: "Email", value: "admin@routerkart.in" },
-              { label: "WhatsApp", value: "Available on our website" },
+              { label: "WhatsApp", value: "+91 80739 19667" },
               { label: "Website", value: "routerkart.in" },
-              { label: "Location", value: "Bengaluru, Karnataka, India" },
+              { label: "Location", value: "#132, Ramanna Garden, Bangalore - 560027" },
             ].map((c, i) => (
               <div key={i} style={{ background: "#F7F7F5", borderRadius: "8px", padding: "12px 16px" }}>
                 <p style={{ fontSize: "10px", fontWeight: "800", color: "#aaa", letterSpacing: "1px", textTransform: "uppercase", margin: "0 0 4px" }}>{c.label}</p>
