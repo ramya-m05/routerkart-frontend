@@ -8,23 +8,21 @@ import CategoryGrid from "../components/CategoryGrid";
 import { useIsMobile } from "../hooks/useIsMobile";
 
 function Home() {
-  console.log("Home page rendered");
+
   const [products, setProducts] = useState([]);
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    console.log("Fetching products for Home page...");
+
     fetchProducts();
   }, []);
 
   const fetchProducts = async () => {
-    console.log("Fetching products...");
+
     try {
       const res = await API.get("/products");
 
-      console.log("FULL RESPONSE:", res);
-      console.log("DATA ONLY:", res.data);
-      console.log("FIRST PRODUCT:", res.data?.[0]);
+
       setProducts(Array.isArray(res.data) ? res.data : []);
     } catch (err) { console.log(err); }
   };
