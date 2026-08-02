@@ -12,18 +12,19 @@ function Home() {
   const [products, setProducts] = useState([]);
   const isMobile = useIsMobile();
 
-  useEffect(() => { 
+  useEffect(() => {
     console.log("Fetching products for Home page...");
-    fetchProducts(); }, []);
+    fetchProducts();
+  }, []);
 
   const fetchProducts = async () => {
     console.log("Fetching products...");
     try {
       const res = await API.get("/products");
 
-      console.log("FULL RESPONSE:", res);         
-    console.log("DATA ONLY:", res.data);         
-    console.log("FIRST PRODUCT:", res.data?.[0]);
+      console.log("FULL RESPONSE:", res);
+      console.log("DATA ONLY:", res.data);
+      console.log("FIRST PRODUCT:", res.data?.[0]);
       setProducts(Array.isArray(res.data) ? res.data : []);
     } catch (err) { console.log(err); }
   };
@@ -46,7 +47,7 @@ function Home() {
         borderBottom: "1px solid rgba(0,0,0,0.08)"
       }}>
         {[
-          { icon: "🚚", label: "Free Delivery", sub: "Orders ₹999+" },
+          { icon: "🚚", label: "Free Delivery", sub: "Orders ₹499+" },
           { icon: "🔒", label: "Secure Pay", sub: "100% encrypted" },
           { icon: "💯", label: "Genuine", sub: "Brand verified" },
           { icon: "⚡", label: "Fast Support", sub: "24/7 help" }
@@ -137,9 +138,9 @@ function Home() {
                 <p style={{ color: "white", fontWeight: "800", fontSize: "12px", letterSpacing: "1px", textTransform: "uppercase", margin: "0 0 12px" }}>Shop</p>
                 {[
                   { label: "All Products", to: "/store" },
-                  { label: "Routers",      to: "/store?category=Router" },
+                  { label: "Routers", to: "/store?category=Router" },
                   { label: "Fiber Cables", to: "/store?category=Fiber+Cable" },
-                  { label: "Security",     to: "/store?category=Security" },
+                  { label: "Security", to: "/store?category=Security" },
                 ].map(l => (
                   <Link key={l.label} to={l.to} style={{ display: "block", color: "#555", textDecoration: "none", fontSize: "13px", fontWeight: "500", marginBottom: "8px", transition: "color 0.15s" }}
                     onMouseEnter={e => e.target.style.color = "#FEE12B"} onMouseLeave={e => e.target.style.color = "#555"}>
@@ -150,11 +151,11 @@ function Home() {
               <div>
                 <p style={{ color: "white", fontWeight: "800", fontSize: "12px", letterSpacing: "1px", textTransform: "uppercase", margin: "0 0 12px" }}>Company</p>
                 {[
-                  { label: "About Us",   to: "/about" },
-                  { label: "Privacy Policy",    to: "/privacy-policy" },
-                  {label: "Return Policy", to: "/return-policy" },
-                  { label: "Terms",      to: "/terms" },
-                  { label: "Support",    to: "/support" },
+                  { label: "About Us", to: "/about" },
+                  { label: "Privacy Policy", to: "/privacy-policy" },
+                  { label: "Return Policy", to: "/return-policy" },
+                  { label: "Terms", to: "/terms" },
+                  { label: "Support", to: "/support" },
                   { label: "Contact Us", to: "/contact" },
                 ].map(l => (
                   <Link key={l.label} to={l.to} style={{ display: "block", color: "#555", textDecoration: "none", fontSize: "13px", fontWeight: "500", marginBottom: "8px", transition: "color 0.15s" }}
@@ -166,10 +167,10 @@ function Home() {
               <div>
                 <p style={{ color: "white", fontWeight: "800", fontSize: "12px", letterSpacing: "1px", textTransform: "uppercase", margin: "0 0 12px" }}>Account</p>
                 {[
-                  { label: "My Orders",  to: "/orders" },
+                  { label: "My Orders", to: "/orders" },
                   { label: "My Profile", to: "/profile" },
-                  { label: "Wishlist",   to: "/wishlist" },
-                  { label: "Cart",       to: "/cart" },
+                  { label: "Wishlist", to: "/wishlist" },
+                  { label: "Cart", to: "/cart" },
                 ].map(l => (
                   <Link key={l.label} to={l.to} style={{ display: "block", color: "#555", textDecoration: "none", fontSize: "13px", fontWeight: "500", marginBottom: "8px", transition: "color 0.15s" }}
                     onMouseEnter={e => e.target.style.color = "#FEE12B"} onMouseLeave={e => e.target.style.color = "#555"}>
@@ -183,7 +184,7 @@ function Home() {
           {/* TRUST BADGES */}
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", paddingBottom: "24px", borderBottom: "1px solid #1e1e1e" }}>
             {[
-              "🚚 Free delivery on ₹999+",
+              "🚚 Free delivery on ₹499+",
               "🔒 Secure Razorpay checkout",
               "✅ Genuine products",
               "🔄 7-day returns",
@@ -198,10 +199,10 @@ function Home() {
             <p style={{ color: "#333", fontSize: "12px", margin: 0 }}>© 2026 RouterKart. All rights reserved.</p>
             <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
               {[
-                { label: "Privacy Policy",      to: "/privacy-policy" },
-                { label: "Terms",        to: "/terms" },
-                {label: "Return Policy", to: "/return-policy" },
-                { label: "Refund",       to: "/terms#refund-policy" },
+                { label: "Privacy Policy", to: "/privacy-policy" },
+                { label: "Terms", to: "/terms" },
+                { label: "Return Policy", to: "/return-policy" },
+                { label: "Refund", to: "/terms#refund-policy" },
                 { label: "Cancellation", to: "/terms#cancellation-policy" },
               ].map(l => (
                 <Link key={l.label} to={l.to} style={{ color: "#333", textDecoration: "none", fontSize: "12px", fontWeight: "600" }}

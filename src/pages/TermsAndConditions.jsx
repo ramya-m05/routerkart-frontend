@@ -191,8 +191,8 @@ function TermsAndConditions() {
 
           <Section title="Shipping Charges">
             <ul>
-              <li>Free shipping on all orders above ₹999.</li>
-              <li>A flat delivery charge of ₹49 applies to orders below ₹999.</li>
+              <li>Free shipping on all orders above ₹499.</li>
+              <li>A flat delivery charge of ₹49 applies to orders below ₹499.</li>
               <li>Shipping charges are non-refundable.</li>
             </ul>
           </Section>

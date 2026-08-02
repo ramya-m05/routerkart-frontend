@@ -28,248 +28,248 @@ function Checkout() {
   const [addresses, setAddresses] = useState([]);
 
   const subtotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const delivery = subtotal >= 999 ? 0 : 49;
+  const delivery = subtotal >= 499 ? 0 : 49;
   const grandTotal = subtotal + delivery;
   const codOnDelivery = grandTotal - COD_ADVANCE;
 
- const INDIAN_STATES = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
-  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
-  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
-  "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
-  "Andaman and Nicobar Islands", "Chandigarh",
-  "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
-  "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry",
-];
+  const INDIAN_STATES = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
+    "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
+    "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
+    "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+    "Andaman and Nicobar Islands", "Chandigarh",
+    "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
+    "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry",
+  ];
 
-// ── inside the component, with other delivery state vars ──
-const [state, setState] = useState("");
+  // ── inside the component, with other delivery state vars ──
+  const [state, setState] = useState("");
 
-// ── useEffects ──
-useEffect(() => {
-  const fetchAddresses = async () => {
+  // ── useEffects ──
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        const res = await API.get("/users/addresses");
+        setAddresses(res.data);
+      } catch (err) {
+        console.error("Failed to fetch addresses:", err);
+      }
+    };
+    fetchAddresses();
+  }, []);
+
+  useEffect(() => {
+    if (!addresses || addresses.length === 0) return;
+    const defaultAddress = addresses.find(a => a.isDefault) || addresses[0];
+    if (!defaultAddress) return;
+    setDoorNo(defaultAddress.doorNo || "");
+    setHouseName(defaultAddress.houseName || "");
+    setCross(defaultAddress.cross || "");
+    setLandmark(defaultAddress.landmark || "");
+    setCity(defaultAddress.city || "");
+    setDistrict(defaultAddress.district || "");
+    setState(defaultAddress.state || "");   // ✅
+    setPincode(defaultAddress.pincode || "");
+    setPhone(defaultAddress.phone || "");
+  }, [addresses]);
+
+  const buildAddress = () => {
+    const parts = [
+      doorNo && `${doorNo}`,
+      houseName && `${houseName}`,
+      cross && `${cross}`,
+      landmark && `Near ${landmark}`,
+      city && `${city}`,
+      district && `${district}`,
+      state && `${state}`,           // ✅
+      pincode && `- ${pincode}`,
+    ].filter(Boolean);
+    return parts.join(", ");
+  };
+
+  const validate = () => {
+    if (!doorNo.trim()) { toast.error("Please enter Door No / House Name"); return false; }
+    if (!city.trim()) { toast.error("Please enter your city"); return false; }
+    if (!district.trim()) { toast.error("Please enter your district"); return false; }
+    if (!state.trim()) { toast.error("Please select your state"); return false; } // ✅
+    if (!pincode.trim() || pincode.length !== 6 || isNaN(pincode)) {
+      toast.error("Please enter a valid 6-digit pincode"); return false;
+    }
+    if (!phone.trim() || phone.length < 10) {
+      toast.error("Please enter a valid 10-digit phone number"); return false;
+    }
+    if (paymentMode === "cod" && !codConfirmed) {
+      toast.error("Please confirm COD advance payment terms"); return false;
+    }
+    return true;
+  };
+
+  const placeOrder = async () => {
+    if (!validate()) return;
+
+    setLoading(true);
+
     try {
-      const res = await API.get("/users/addresses");
-      setAddresses(res.data);
+      const user = JSON.parse(localStorage.getItem("user")) || {};
+      const fullAddress = buildAddress();
+
+      const amount =
+        paymentMode === "cod"
+          ? Number(COD_ADVANCE)
+          : Number(grandTotal);
+
+      console.log("FRONTEND AMOUNT:", amount, typeof amount);
+      // ✅ STEP 1: CHECK STOCK BEFORE PAYMENT
+      await API.post("/orders/check-stock", {
+        items: cart.map((i) => ({
+          productId: i._id,
+          qty: i.qty,
+        })),
+      });
+
+      // ✅ STEP 2: CREATE ORDER (RAZORPAY) — Server calculates exact amount from database prices
+      const { data } = await API.post("/payment/create-order", {
+        items: cart.map((i) => ({ productId: i._id, qty: i.qty })),
+        paymentMode,
+        amount,
+      });
+
+      console.log("ORDER DATA:", data);
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY,
+        amount: data.amount,
+        currency: data.currency,
+        order_id: data.id,
+
+        name: "RouterKart",
+        description: "Order Payment",
+
+        prefill: {
+          name: user?.name || "Customer",
+          email: user?.email || "test@routerkart.in",
+          contact:
+            phone?.toString().replace(/\D/g, "").slice(-10) ||
+            "9999999999",
+        },
+
+        notes: {
+          address: "RouterKart Order",
+        },
+
+        theme: {
+          color: "#FEE12B",
+        },
+
+        // ✅ STEP 3: PAYMENT SUCCESS HANDLER
+        handler: async function (response) {
+          try {
+            console.log("PAYMENT SUCCESS:", response);
+
+            // ✅ VERIFY PAYMENT
+            const verifyRes = await API.post("/payment/verify", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            if (!verifyRes.data?.verified) {
+              throw new Error("Payment verification failed");
+            }
+
+            // ✅ CREATE FINAL ORDER
+            await API.post("/orders", {
+              items: cart.map((i) => ({
+                productId: i._id,
+                name: i.name,
+                price: Number(i.price),
+                qty: Number(i.qty),
+              })),
+
+              address: fullAddress,
+
+              addressDetails: {
+                doorNo,
+                houseName,
+                cross,
+                landmark,
+                city,
+                district,
+                pincode,
+              },
+
+              phone: phone.toString(),
+
+              paymentMode,
+              paymentStatus:
+                paymentMode === "cod" ? "advance_paid" : "paid",
+
+              ...(paymentMode === "cod" && {
+                advancePaid: Number(COD_ADVANCE),
+                amountDueOnDelivery: Number(codOnDelivery),
+              }),
+
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+            });
+
+            clearCart();
+
+            toast.success(
+              paymentMode === "cod"
+                ? `Order placed! ₹${codOnDelivery} due on delivery 🎉`
+                : "Payment successful 🎉"
+            );
+
+            navigate("/orders");
+
+          } catch (err) {
+            console.log("ORDER ERROR:", err.response?.data || err);
+
+            const msg = err.response?.data?.message;
+
+            if (msg?.includes("stock")) {
+              toast.error("Product is out of stock ❌");
+            } else {
+              toast.error(msg || "Order failed after payment");
+            }
+          }
+        },
+
+        modal: {
+          ondismiss: function () {
+            toast.error("Payment cancelled");
+          },
+        },
+      };
+
+      console.log("OPTIONS:", options);
+
+      const rzp = new window.Razorpay(options);
+
+      rzp.on("payment.failed", function (response) {
+        console.log("PAYMENT FAILED:", response.error);
+        toast.error(response.error?.description || "Payment failed");
+      });
+
+      rzp.open();
+
     } catch (err) {
-      console.error("Failed to fetch addresses:", err);
+      console.log("PAYMENT ERROR:", err.response?.data || err);
+
+      const msg = err.response?.data?.message;
+
+      if (msg?.includes("stock")) {
+        toast.error("Some items are out of stock ❌");
+      } else {
+        toast.error(msg || "Payment initialization failed");
+      }
+
+    } finally {
+      setLoading(false);
     }
   };
-  fetchAddresses();
-}, []);
-
-useEffect(() => {
-  if (!addresses || addresses.length === 0) return;
-  const defaultAddress = addresses.find(a => a.isDefault) || addresses[0];
-  if (!defaultAddress) return;
-  setDoorNo(defaultAddress.doorNo    || "");
-  setHouseName(defaultAddress.houseName || "");
-  setCross(defaultAddress.cross      || "");
-  setLandmark(defaultAddress.landmark  || "");
-  setCity(defaultAddress.city        || "");
-  setDistrict(defaultAddress.district  || "");
-  setState(defaultAddress.state      || "");   // ✅
-  setPincode(defaultAddress.pincode   || "");
-  setPhone(defaultAddress.phone      || "");
-}, [addresses]);
-
-const buildAddress = () => {
-  const parts = [
-    doorNo    && `${doorNo}`,
-    houseName && `${houseName}`,
-    cross     && `${cross}`,
-    landmark  && `Near ${landmark}`,
-    city      && `${city}`,
-    district  && `${district}`,
-    state     && `${state}`,           // ✅
-    pincode   && `- ${pincode}`,
-  ].filter(Boolean);
-  return parts.join(", ");
-};
-
-const validate = () => {
-  if (!doorNo.trim())   { toast.error("Please enter Door No / House Name");        return false; }
-  if (!city.trim())     { toast.error("Please enter your city");                   return false; }
-  if (!district.trim()) { toast.error("Please enter your district");               return false; }
-  if (!state.trim())    { toast.error("Please select your state");                 return false; } // ✅
-  if (!pincode.trim() || pincode.length !== 6 || isNaN(pincode)) {
-    toast.error("Please enter a valid 6-digit pincode"); return false;
-  }
-  if (!phone.trim() || phone.length < 10) {
-    toast.error("Please enter a valid 10-digit phone number"); return false;
-  }
-  if (paymentMode === "cod" && !codConfirmed) {
-    toast.error("Please confirm COD advance payment terms"); return false;
-  }
-  return true;
-};
-
-const placeOrder = async () => {
-  if (!validate()) return;
-
-  setLoading(true);
-
-  try {
-    const user = JSON.parse(localStorage.getItem("user")) || {};
-    const fullAddress = buildAddress();
-
-    const amount =
-      paymentMode === "cod"
-        ? Number(COD_ADVANCE)
-        : Number(grandTotal);
-
-    console.log("FRONTEND AMOUNT:", amount, typeof amount);
-    // ✅ STEP 1: CHECK STOCK BEFORE PAYMENT
-    await API.post("/orders/check-stock", {
-      items: cart.map((i) => ({
-        productId: i._id,
-        qty: i.qty,
-      })),
-    });
-
-    // ✅ STEP 2: CREATE ORDER (RAZORPAY) — Server calculates exact amount from database prices
-    const { data } = await API.post("/payment/create-order", {
-      items: cart.map((i) => ({ productId: i._id, qty: i.qty })),
-      paymentMode,
-      amount,
-    });
-
-    console.log("ORDER DATA:", data);
-
-    const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY,
-      amount: data.amount,
-      currency: data.currency,
-      order_id: data.id,
-
-      name: "RouterKart",
-      description: "Order Payment",
-
-      prefill: {
-        name: user?.name || "Customer",
-        email: user?.email || "test@routerkart.in",
-        contact:
-          phone?.toString().replace(/\D/g, "").slice(-10) ||
-          "9999999999",
-      },
-
-      notes: {
-        address: "RouterKart Order",
-      },
-
-      theme: {
-        color: "#FEE12B",
-      },
-
-      // ✅ STEP 3: PAYMENT SUCCESS HANDLER
-      handler: async function (response) {
-        try {
-          console.log("PAYMENT SUCCESS:", response);
-
-          // ✅ VERIFY PAYMENT
-          const verifyRes = await API.post("/payment/verify", {
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-          });
-
-          if (!verifyRes.data?.verified) {
-            throw new Error("Payment verification failed");
-          }
-
-          // ✅ CREATE FINAL ORDER
-          await API.post("/orders", {
-            items: cart.map((i) => ({
-              productId: i._id,
-              name: i.name,
-              price: Number(i.price),
-              qty: Number(i.qty),
-            })),
-
-            address: fullAddress,
-
-            addressDetails: {
-              doorNo,
-              houseName,
-              cross,
-              landmark,
-              city,
-              district,
-              pincode,
-            },
-
-            phone: phone.toString(),
-
-            paymentMode,
-            paymentStatus:
-              paymentMode === "cod" ? "advance_paid" : "paid",
-
-            ...(paymentMode === "cod" && {
-              advancePaid: Number(COD_ADVANCE),
-              amountDueOnDelivery: Number(codOnDelivery),
-            }),
-
-            razorpayOrderId: response.razorpay_order_id,
-            razorpayPaymentId: response.razorpay_payment_id,
-          });
-
-          clearCart();
-
-          toast.success(
-            paymentMode === "cod"
-              ? `Order placed! ₹${codOnDelivery} due on delivery 🎉`
-              : "Payment successful 🎉"
-          );
-
-          navigate("/orders");
-
-        } catch (err) {
-          console.log("ORDER ERROR:", err.response?.data || err);
-
-          const msg = err.response?.data?.message;
-
-          if (msg?.includes("stock")) {
-            toast.error("Product is out of stock ❌");
-          } else {
-            toast.error(msg || "Order failed after payment");
-          }
-        }
-      },
-
-      modal: {
-        ondismiss: function () {
-          toast.error("Payment cancelled");
-        },
-      },
-    };
-
-    console.log("OPTIONS:", options);
-
-    const rzp = new window.Razorpay(options);
-
-    rzp.on("payment.failed", function (response) {
-      console.log("PAYMENT FAILED:", response.error);
-      toast.error(response.error?.description || "Payment failed");
-    });
-
-    rzp.open();
-
-  } catch (err) {
-    console.log("PAYMENT ERROR:", err.response?.data || err);
-
-    const msg = err.response?.data?.message;
-
-    if (msg?.includes("stock")) {
-      toast.error("Some items are out of stock ❌");
-    } else {
-      toast.error(msg || "Payment initialization failed");
-    }
-
-  } finally {
-    setLoading(false);
-  }
-};
   const inp = {
     width: "100%", padding: "12px 14px", border: "2px solid #e5e5e5",
     borderRadius: "8px", fontSize: "14px", color: "#111", background: "white",
@@ -344,19 +344,19 @@ const placeOrder = async () => {
               </div>
             </div>
             {/* STATE */}
-<div style={{ marginBottom: "14px" }}>
-  <label style={lbl}>State <span style={{ color: "#e53e3e" }}>*</span></label>
-  <select
-    value={state}
-    onChange={e => setState(e.target.value)}
-    style={inp}
-    onFocus={onFocus}
-    onBlur={onBlur}
-  >
-    <option value="">Select state</option>
-    {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-  </select>
-</div>
+            <div style={{ marginBottom: "14px" }}>
+              <label style={lbl}>State <span style={{ color: "#e53e3e" }}>*</span></label>
+              <select
+                value={state}
+                onChange={e => setState(e.target.value)}
+                style={inp}
+                onFocus={onFocus}
+                onBlur={onBlur}
+              >
+                <option value="">Select state</option>
+                {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
 
             {/* ROW 4 — Pincode + Phone */}
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "14px" }}>

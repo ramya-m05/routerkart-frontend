@@ -79,7 +79,7 @@ function About() {
               { label: "Email", value: "admin@routerkart.in" },
               { label: "WhatsApp", value: "+91 80739 19667" },
               { label: "Website", value: "routerkart.in" },
-              { label: "Location", value: "#132, Ramanna Garden, Bangalore - 560027" },
+              { label: "Location", value: "#132, Ramanna Garden, New Mission Road, O T C Road, Chamaraj Pet, Bangalore South, Wilson Garden, Bangalore, Karnataka - 560027" },
             ].map((c, i) => (
               <div key={i} style={{ background: "#F7F7F5", borderRadius: "8px", padding: "12px 16px" }}>
                 <p style={{ fontSize: "10px", fontWeight: "800", color: "#aaa", letterSpacing: "1px", textTransform: "uppercase", margin: "0 0 4px" }}>{c.label}</p>

@@ -12,14 +12,14 @@ function Login() {
   const isMobile = useIsMobile();
 
   const [identifier, setIdentifier] = useState(""); // email or phone
-  const [password,   setPassword]   = useState("");
-  const [showPass,   setShowPass]   = useState(false);
-  const [loading,    setLoading]    = useState(false);
-  const [inputErr,   setInputErr]   = useState("");
+  const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [inputErr, setInputErr] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const user  = JSON.parse(localStorage.getItem("user") || "null");
+    const user = JSON.parse(localStorage.getItem("user") || "null");
     if (token && user) {
       user.role === "admin" ? navigate("/admin") : navigate("/store");
     }
@@ -45,15 +45,15 @@ function Login() {
     try {
       const res = await API.post("/auth/login", {
         identifier: isPhone ? val : val.toLowerCase(),
-        password:   password.trim(),
+        password: password.trim(),
       });
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify({
-        name:  res.data.name,
+        name: res.data.name,
         email: res.data.email,
         phone: res.data.phone || "",
-        role:  res.data.role,
+        role: res.data.role,
       }));
 
       toast.success("Login successful 🚀");
@@ -61,7 +61,7 @@ function Login() {
 
     } catch (err) {
       const msg = err.response?.data?.message;
-      if (msg === "User not found")      toast.error("No account found with this email/phone ❌");
+      if (msg === "User not found") toast.error("No account found with this email/phone ❌");
       else if (msg === "Incorrect password") toast.error("Wrong password ❌");
       else toast.error(msg || "Login failed");
     } finally {
@@ -95,7 +95,7 @@ function Login() {
             <p style={{ color: "#666", fontSize: "14px", lineHeight: "1.65", margin: "0 0 32px" }}>
               India's #1 store for networking equipment — routers, fiber tools, security systems and more.
             </p>
-            {["🚚 Free delivery on orders ₹999+", "🔒 Secure & encrypted payments", "💯 Genuine brand-verified products"].map((f, i) => (
+            {["🚚 Free delivery on orders ₹499+", "🔒 Secure & encrypted payments", "💯 Genuine brand-verified products"].map((f, i) => (
               <div key={i} style={{ color: "#bbb", fontSize: "13px", fontWeight: "500", padding: "10px 14px", background: "rgba(255,255,255,0.04)", borderRadius: "6px", borderLeft: "3px solid #FEE12B", marginBottom: "8px" }}>{f}</div>
             ))}
           </div>
@@ -128,11 +128,11 @@ function Login() {
               value={identifier}
               onChange={e => { setIdentifier(e.target.value); if (inputErr) setInputErr(""); }}
               onKeyDown={(e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();   // 🔥 VERY IMPORTANT
-    handleLogin();
-  }
-}}
+                if (e.key === "Enter") {
+                  e.preventDefault();   // 🔥 VERY IMPORTANT
+                  handleLogin();
+                }
+              }}
               style={{ ...inputBase, borderColor: inputErr ? "#e53e3e" : "#e5e5e5" }}
               onFocus={fo}
               onBlur={bl}
@@ -161,11 +161,11 @@ function Login() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 onKeyDown={(e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    handleLogin();
-  }
-}}
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleLogin();
+                  }
+                }}
                 style={{ ...inputBase, paddingRight: "50px" }}
                 onFocus={fo} onBlur={bl}
               />

@@ -10,13 +10,13 @@ function Cart() {
   const isMobile = useIsMobile();
 
   const subtotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const delivery = subtotal >= 999 ? 0 : 49;
+  const delivery = subtotal >= 499 ? 0 : 49;
   const total = subtotal + delivery;
   const itemCount = cart.reduce((sum, i) => sum + i.qty, 0);
 
   return (
     <div style={{ background: "#F7F7F5", minHeight: "100vh", fontFamily: "'DM Sans', sans-serif" }}>
-      <Navbar setSearch={() => {}} />
+      <Navbar setSearch={() => { }} />
 
       {/* HEADER */}
       <div style={{ background: "#111", padding: isMobile ? "28px 20px 22px" : "44px 40px 32px", borderBottom: "4px solid #FEE12B" }}>
