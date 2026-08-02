@@ -119,7 +119,7 @@ function Checkout() {
           ? Number(COD_ADVANCE)
           : Number(grandTotal);
 
-      console.log("FRONTEND AMOUNT:", amount, typeof amount);
+
       // ✅ STEP 1: CHECK STOCK BEFORE PAYMENT
       await API.post("/orders/check-stock", {
         items: cart.map((i) => ({
@@ -135,7 +135,7 @@ function Checkout() {
         amount,
       });
 
-      console.log("ORDER DATA:", data);
+
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY,
@@ -165,7 +165,7 @@ function Checkout() {
         // ✅ STEP 3: PAYMENT SUCCESS HANDLER
         handler: async function (response) {
           try {
-            console.log("PAYMENT SUCCESS:", response);
+
 
             // ✅ VERIFY PAYMENT
             const verifyRes = await API.post("/payment/verify", {
@@ -244,7 +244,7 @@ function Checkout() {
         },
       };
 
-      console.log("OPTIONS:", options);
+
 
       const rzp = new window.Razorpay(options);
 
