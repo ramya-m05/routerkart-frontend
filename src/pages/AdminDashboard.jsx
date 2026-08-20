@@ -26,6 +26,8 @@ function AdminDashboard() {
   const [brand,         setBrand]         = useState("");
   const [sku,           setSku]           = useState("");
   const [deliveryDays,  setDeliveryDays]  = useState("5");
+  const [advancePayment, setAdvancePayment] = useState(false);
+  const [advanceAmount,  setAdvanceAmount]  = useState("");
   const [editingId,     setEditingId]     = useState(null);
 
   /* ── categories ── */
@@ -197,6 +199,16 @@ function AdminDashboard() {
     if (originalPrice && +originalPrice < +price) { toast.error("MRP must be ≥ selling price");       return false; }
     if (!stock || isNaN(stock) || +stock < 0)     { toast.error("Enter valid stock quantity");        return false; }
     if (!deliveryDays || +deliveryDays < 1)       { toast.error("Enter valid delivery days (min 1)"); return false; }
+    if (advancePayment) {
+      if (!advanceAmount || isNaN(advanceAmount) || +advanceAmount <= 0) {
+        toast.error("Enter a valid advance amount greater than ₹0");
+        return false;
+      }
+      if (price && +advanceAmount >= +price) {
+        toast.error("Advance amount must be less than selling price");
+        return false;
+      }
+    }
     return true;
   };
 
@@ -205,12 +217,14 @@ function AdminDashboard() {
   ════════════════════════════════════════ */
   const buildForm = () => {
     const fd = new FormData();
-    fd.append("name",         name.trim());
-    fd.append("description",  description || "");
-    fd.append("price",        Number(price));
-    fd.append("stock",        Number(stock));
-    fd.append("category",     category);
-    fd.append("deliveryDays", Number(deliveryDays) || 5);
+    fd.append("name",           name.trim());
+    fd.append("description",    description || "");
+    fd.append("price",          Number(price));
+    fd.append("stock",          Number(stock));
+    fd.append("category",       category);
+    fd.append("deliveryDays",   Number(deliveryDays) || 5);
+    fd.append("advancePayment", advancePayment ? "true" : "false");
+    fd.append("advanceAmount",  advancePayment ? Number(advanceAmount) || 0 : 0);
     if (originalPrice) fd.append("originalPrice", Number(originalPrice));
     if (brand) fd.append("brand", brand.trim());
     if (sku)   fd.append("sku",   sku.trim());
@@ -288,6 +302,8 @@ function AdminDashboard() {
     setBrand(p.brand || "");
     setSku(p.sku || "");
     setDeliveryDays(p.deliveryDays || "5");
+    setAdvancePayment(Boolean(p.advancePayment));
+    setAdvanceAmount(p.advanceAmount ? String(p.advanceAmount) : "");
 
     const fromArray  = Array.isArray(p.images) ? p.images : [];
     const fromSingle = p.image && !fromArray.includes(p.image) ? [p.image] : [];
@@ -301,6 +317,8 @@ function AdminDashboard() {
     setEditingId(null);
     setName(""); setDescription(""); setPrice(""); setOriginalPrice("");
     setStock(""); setCategory(""); setBrand(""); setSku(""); setDeliveryDays("5");
+    setAdvancePayment(false);
+    setAdvanceAmount("");
     imageSlots.forEach(s => { if (!s.existing && s.preview?.startsWith("blob:")) URL.revokeObjectURL(s.preview); });
     setImageSlots([]);
   };
@@ -574,6 +592,13 @@ function AdminDashboard() {
                             <span style={{ fontSize: "10px", fontWeight: "800", color: "#fff", background: "#e53e3e", padding: "1px 5px", borderRadius: "3px" }}>{discP(+p.originalPrice, +p.price)}%</span>
                           </div>
                         )}
+                        {p.advancePayment && (
+                          <div style={{ marginTop: "4px" }}>
+                            <span style={{ display: "inline-block", fontSize: "10px", fontWeight: "800", color: "#111", background: "#FEE12B", padding: "2px 6px", borderRadius: "4px" }}>
+                              ⚡ ₹{p.advanceAmount || 0} Adv
+                            </span>
+                          </div>
+                        )}
                       </td>
                       <td style={{ padding: "12px 14px" }}>
                         <span style={{ fontWeight: "800", fontSize: "14px", color: +p.stock === 0 ? "#dc2626" : +p.stock <= 3 ? "#cc8800" : "#16a34a" }}>{p.stock}</span>
@@ -671,6 +696,100 @@ function AdminDashboard() {
                     </p>
                   )}
                 </div>
+              </div>
+
+              {/* ADVANCE PAYMENT TOGGLE & AMOUNT */}
+              <div style={{
+                background: "#f9f9f8",
+                border: "1px solid #e8e8e5",
+                borderRadius: "10px",
+                padding: "16px 18px",
+                marginBottom: "14px"
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                  <div>
+                    <label style={{ ...lbl, marginBottom: "2px" }}>ADVANCE PAYMENT</label>
+                    <p style={{ fontSize: "12px", color: "#777", margin: 0, lineHeight: 1.4 }}>
+                      Require customers to pay part of the price upfront to book this item
+                    </p>
+                  </div>
+                  <div
+                    onClick={() => {
+                      setAdvancePayment(prev => {
+                        const next = !prev;
+                        if (!next) setAdvanceAmount("");
+                        return next;
+                      });
+                    }}
+                    role="switch"
+                    aria-checked={advancePayment}
+                    style={{
+                      width: "48px",
+                      height: "26px",
+                      borderRadius: "13px",
+                      background: advancePayment ? "#FEE12B" : "#E5E7EB",
+                      cursor: "pointer",
+                      position: "relative",
+                      transition: "background 0.25s ease, box-shadow 0.25s ease",
+                      boxShadow: advancePayment ? "0 2px 6px rgba(254, 225, 43, 0.4)" : "inset 0 1px 2px rgba(0,0,0,0.08)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "50%",
+                        background: advancePayment ? "#111111" : "#FFFFFF",
+                        position: "absolute",
+                        top: "3px",
+                        left: advancePayment ? "25px" : "3px",
+                        transition: "left 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s ease",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.25)"
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {advancePayment && (
+                  <div style={{
+                    marginTop: "14px",
+                    paddingTop: "14px",
+                    borderTop: "1px solid #ebebea"
+                  }}>
+                    <label style={lbl}>ADVANCE AMOUNT (₹) <Req /></label>
+                    <input
+                      style={{
+                        ...inp,
+                        borderColor: (advanceAmount && price && +advanceAmount >= +price) || (advanceAmount && +advanceAmount <= 0) ? "#e53e3e" : "#e5e5e5"
+                      }}
+                      placeholder="e.g. 200"
+                      type="number"
+                      min="1"
+                      value={advanceAmount}
+                      onChange={e => setAdvanceAmount(e.target.value)}
+                      onFocus={fo}
+                      onBlur={bl}
+                    />
+                    {advanceAmount !== "" && !isNaN(advanceAmount) && price && +price > 0 && (
+                      <div style={{ marginTop: "6px", fontSize: "11px" }}>
+                        {+advanceAmount >= +price ? (
+                          <span style={{ color: "#dc2626", fontWeight: "700" }}>
+                            ⚠️ Advance amount (₹{+advanceAmount}) must be strictly less than selling price (₹{(+price).toLocaleString()})
+                          </span>
+                        ) : +advanceAmount <= 0 ? (
+                          <span style={{ color: "#dc2626", fontWeight: "700" }}>
+                            ⚠️ Advance amount must be greater than ₹0
+                          </span>
+                        ) : (
+                          <span style={{ color: "#16a34a", fontWeight: "700" }}>
+                            💡 Advance: ₹{(+advanceAmount).toLocaleString()} · Due on Delivery: ₹{(+price - +advanceAmount).toLocaleString()} ({Math.round((+advanceAmount / +price) * 100)}% of total)
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
