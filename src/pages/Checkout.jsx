@@ -5,8 +5,6 @@ import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useIsMobile } from "../hooks/useIsMobile";
 
-const COD_ADVANCE = 150; // Fixed advance amount for COD orders 
-
 function Checkout() {
   // Delivery fields
   const [doorNo, setDoorNo] = useState("");
@@ -22,15 +20,57 @@ function Checkout() {
   const [loading, setLoading] = useState(false);
   const [codConfirmed, setCodConfirmed] = useState(false);
 
-  const { cart, clearCart } = useContext(CartContext);
+  const { cart, setCart, clearCart } = useContext(CartContext);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [addresses, setAddresses] = useState([]);
 
+  // Sync cart items with fresh product data (prices, advancePayment, advanceAmount) on mount
+  useEffect(() => {
+    const syncCartProducts = async () => {
+      try {
+        const res = await API.get("/products");
+        const products = res.data;
+        if (Array.isArray(products) && products.length > 0) {
+          setCart(prevCart =>
+            prevCart.map(cartItem => {
+              const fresh = products.find(p => p._id === cartItem._id);
+              if (fresh) {
+                return {
+                  ...cartItem,
+                  price: fresh.price,
+                  name: fresh.name,
+                  image: fresh.images?.[0] || fresh.image || cartItem.image,
+                  advancePayment: fresh.advancePayment,
+                  advanceAmount: fresh.advanceAmount,
+                };
+              }
+              return cartItem;
+            })
+          );
+        }
+      } catch (err) {
+        console.error("Cart sync error:", err);
+      }
+    };
+    if (cart && cart.length > 0) {
+      syncCartProducts();
+    }
+  }, []);
+
   const subtotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
   const delivery = subtotal >= 499 ? 0 : 49;
   const grandTotal = subtotal + delivery;
-  const codOnDelivery = grandTotal - COD_ADVANCE;
+
+  // Calculate COD advance based on items that have advancePayment enabled
+  const rawCodAdvance = cart.reduce((sum, i) => {
+    if (i.advancePayment && Number(i.advanceAmount) > 0) {
+      return sum + Number(i.advanceAmount) * Number(i.qty || 1);
+    }
+    return sum;
+  }, 0);
+  const codAdvance = Math.min(rawCodAdvance, grandTotal);
+  const codOnDelivery = Math.max(0, grandTotal - codAdvance);
 
   const INDIAN_STATES = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
@@ -99,7 +139,7 @@ function Checkout() {
     if (!phone.trim() || phone.length < 10) {
       toast.error("Please enter a valid 10-digit phone number"); return false;
     }
-    if (paymentMode === "cod" && !codConfirmed) {
+    if (paymentMode === "cod" && codAdvance > 0 && !codConfirmed) {
       toast.error("Please confirm COD advance payment terms"); return false;
     }
     return true;
@@ -114,11 +154,49 @@ function Checkout() {
       const user = JSON.parse(localStorage.getItem("user")) || {};
       const fullAddress = buildAddress();
 
+      // If COD and NO advance is required, place order directly without Razorpay
+      if (paymentMode === "cod" && codAdvance === 0) {
+        await API.post("/orders/check-stock", {
+          items: cart.map((i) => ({
+            productId: i._id,
+            qty: i.qty,
+          })),
+        });
+
+        await API.post("/orders", {
+          items: cart.map((i) => ({
+            productId: i._id,
+            name: i.name,
+            price: Number(i.price),
+            qty: Number(i.qty),
+          })),
+          address: fullAddress,
+          addressDetails: {
+            doorNo,
+            houseName,
+            cross,
+            landmark,
+            city,
+            district,
+            pincode,
+          },
+          phone: phone.toString(),
+          paymentMode: "cod",
+          paymentStatus: "pending",
+          advancePaid: 0,
+          amountDueOnDelivery: Number(grandTotal),
+        });
+
+        clearCart();
+        toast.success(`Order placed! ₹${grandTotal.toLocaleString()} due on delivery 🎉`);
+        navigate("/orders");
+        return;
+      }
+
       const amount =
         paymentMode === "cod"
-          ? Number(COD_ADVANCE)
+          ? Number(codAdvance)
           : Number(grandTotal);
-
 
       // ✅ STEP 1: CHECK STOCK BEFORE PAYMENT
       await API.post("/orders/check-stock", {
@@ -135,8 +213,6 @@ function Checkout() {
         amount,
       });
 
-
-
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY,
         amount: data.amount,
@@ -144,7 +220,7 @@ function Checkout() {
         order_id: data.id,
 
         name: "RouterKart",
-        description: "Order Payment",
+        description: paymentMode === "cod" ? "COD Advance Payment" : "Order Payment",
 
         prefill: {
           name: user?.name || "Customer",
@@ -165,8 +241,6 @@ function Checkout() {
         // ✅ STEP 3: PAYMENT SUCCESS HANDLER
         handler: async function (response) {
           try {
-
-
             // ✅ VERIFY PAYMENT
             const verifyRes = await API.post("/payment/verify", {
               razorpay_order_id: response.razorpay_order_id,
@@ -206,7 +280,7 @@ function Checkout() {
                 paymentMode === "cod" ? "advance_paid" : "paid",
 
               ...(paymentMode === "cod" && {
-                advancePaid: Number(COD_ADVANCE),
+                advancePaid: Number(codAdvance),
                 amountDueOnDelivery: Number(codOnDelivery),
               }),
 
@@ -218,7 +292,7 @@ function Checkout() {
 
             toast.success(
               paymentMode === "cod"
-                ? `Order placed! ₹${codOnDelivery} due on delivery 🎉`
+                ? `Order placed! ₹${codOnDelivery.toLocaleString()} due on delivery 🎉`
                 : "Payment successful 🎉"
             );
 
@@ -243,8 +317,6 @@ function Checkout() {
           },
         },
       };
-
-
 
       const rzp = new window.Razorpay(options);
 
@@ -428,36 +500,48 @@ function Checkout() {
               </div>
             ))}
 
-            {/* COD ALERT */}
+            {/* COD ALERT / INFO */}
             {paymentMode === "cod" && (
-              <div style={{ marginTop: "4px", background: "#FFFCEB", border: "2px solid #FEE12B", borderRadius: "10px", padding: "16px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "16px" }}>⚠️</span>
-                  <strong style={{ fontSize: "13px", color: "#111" }}>COD Advance Payment Required</strong>
+              codAdvance > 0 ? (
+                <div style={{ marginTop: "4px", background: "#FFFCEB", border: "2px solid #FEE12B", borderRadius: "10px", padding: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                    <span style={{ fontSize: "16px" }}>⚠️</span>
+                    <strong style={{ fontSize: "13px", color: "#111" }}>COD Advance Payment Required</strong>
+                  </div>
+                  <p style={{ fontSize: "13px", color: "#666", lineHeight: "1.6", margin: "0 0 12px" }}>
+                    Pay <strong style={{ color: "#111" }}>₹{codAdvance.toLocaleString()}</strong> online now to confirm your order.
+                    Remaining <strong style={{ color: "#111" }}>₹{codOnDelivery.toLocaleString()}</strong> is collected at delivery.
+                  </p>
+                  <div style={{ background: "rgba(0,0,0,0.04)", borderRadius: "8px", padding: "10px 12px", marginBottom: "12px" }}>
+                    {[
+                      ["Order Total", `₹${grandTotal.toLocaleString()}`, "#111"],
+                      ["Pay Now (Advance)", `₹${codAdvance.toLocaleString()}`, "#cc8800"],
+                      ["Pay on Delivery", `₹${codOnDelivery.toLocaleString()}`, "#22863a"],
+                    ].map(([k, v, c]) => (
+                      <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "4px" }}>
+                        <span style={{ color: c, fontWeight: "600" }}>{k}</span>
+                        <span style={{ fontWeight: "800", color: c }}>{v}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <label style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer" }}>
+                    <input type="checkbox" checked={codConfirmed} onChange={e => setCodConfirmed(e.target.checked)} style={{ accentColor: "#FEE12B", width: "16px", height: "16px", flexShrink: 0, marginTop: "2px" }} />
+                    <span style={{ fontSize: "12px", color: "#555", fontWeight: "600", lineHeight: 1.5 }}>
+                      I agree to pay ₹{codAdvance.toLocaleString()} advance online + ₹{codOnDelivery.toLocaleString()} on delivery
+                    </span>
+                  </label>
                 </div>
-                <p style={{ fontSize: "13px", color: "#666", lineHeight: "1.6", margin: "0 0 12px" }}>
-                  Pay <strong style={{ color: "#111" }}>₹{COD_ADVANCE}</strong> online now to confirm your order.
-                  Remaining <strong style={{ color: "#111" }}>₹{codOnDelivery.toLocaleString()}</strong> is collected at delivery.
-                </p>
-                <div style={{ background: "rgba(0,0,0,0.04)", borderRadius: "8px", padding: "10px 12px", marginBottom: "12px" }}>
-                  {[
-                    ["Order Total", `₹${grandTotal.toLocaleString()}`, "#111"],
-                    ["Pay Now (Advance)", `₹${COD_ADVANCE}`, "#cc8800"],
-                    ["Pay on Delivery", `₹${codOnDelivery.toLocaleString()}`, "#22863a"],
-                  ].map(([k, v, c]) => (
-                    <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "4px" }}>
-                      <span style={{ color: c, fontWeight: "600" }}>{k}</span>
-                      <span style={{ fontWeight: "800", color: c }}>{v}</span>
-                    </div>
-                  ))}
+              ) : (
+                <div style={{ marginTop: "4px", background: "#F0FDF4", border: "1px solid #bbf7d0", borderRadius: "10px", padding: "14px 16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "16px" }}>✅</span>
+                    <strong style={{ fontSize: "13px", color: "#166534" }}>No Advance Payment Required</strong>
+                  </div>
+                  <p style={{ fontSize: "12px", color: "#15803d", margin: "4px 0 0" }}>
+                    You can pay the full amount of <strong>₹{grandTotal.toLocaleString()}</strong> in cash/UPI upon delivery.
+                  </p>
                 </div>
-                <label style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer" }}>
-                  <input type="checkbox" checked={codConfirmed} onChange={e => setCodConfirmed(e.target.checked)} style={{ accentColor: "#FEE12B", width: "16px", height: "16px", flexShrink: 0, marginTop: "2px" }} />
-                  <span style={{ fontSize: "12px", color: "#555", fontWeight: "600", lineHeight: 1.5 }}>
-                    I agree to pay ₹{COD_ADVANCE} advance online + ₹{codOnDelivery.toLocaleString()} on delivery
-                  </span>
-                </label>
-              </div>
+              )
             )}
           </div>
         </div>
@@ -492,16 +576,26 @@ function Checkout() {
               <span style={{ fontWeight: "700", color: delivery === 0 ? "#22c55e" : "#111" }}>{delivery === 0 ? "FREE" : `₹${delivery}`}</span>
             </div>
 
-            {paymentMode === "cod" && (
+            {paymentMode === "cod" && codAdvance > 0 && (
               <>
                 <div style={{ height: "1px", background: "#eee", margin: "10px 0" }} />
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
                   <span style={{ color: "#cc8800", fontSize: "13px", fontWeight: "700" }}>COD Advance</span>
-                  <span style={{ fontWeight: "800", color: "#cc8800" }}>₹{COD_ADVANCE}</span>
+                  <span style={{ fontWeight: "800", color: "#cc8800" }}>₹{codAdvance.toLocaleString()}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "#22863a", fontSize: "13px", fontWeight: "700" }}>On Delivery</span>
                   <span style={{ fontWeight: "800", color: "#22863a" }}>₹{codOnDelivery.toLocaleString()}</span>
+                </div>
+              </>
+            )}
+
+            {paymentMode === "cod" && codAdvance === 0 && (
+              <>
+                <div style={{ height: "1px", background: "#eee", margin: "10px 0" }} />
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#22863a", fontSize: "13px", fontWeight: "700" }}>Due on Delivery</span>
+                  <span style={{ fontWeight: "800", color: "#22863a" }}>₹{grandTotal.toLocaleString()}</span>
                 </div>
               </>
             )}
@@ -536,17 +630,36 @@ function Checkout() {
 
             <button
               onClick={placeOrder}
-              disabled={loading || (paymentMode === "cod" && !codConfirmed)}
-              style={{ width: "100%", padding: "14px", background: "#FEE12B", color: "#111", border: "none", borderRadius: "8px", fontWeight: "900", fontSize: "15px", cursor: (loading || (paymentMode === "cod" && !codConfirmed)) ? "not-allowed" : "pointer", opacity: (loading || (paymentMode === "cod" && !codConfirmed)) ? 0.6 : 1, fontFamily: "'DM Sans', sans-serif", transition: "background 0.15s" }}
+              disabled={loading || (paymentMode === "cod" && codAdvance > 0 && !codConfirmed)}
+              style={{
+                width: "100%",
+                padding: "14px",
+                background: "#FEE12B",
+                color: "#111",
+                border: "none",
+                borderRadius: "8px",
+                fontWeight: "900",
+                fontSize: "15px",
+                cursor: (loading || (paymentMode === "cod" && codAdvance > 0 && !codConfirmed)) ? "not-allowed" : "pointer",
+                opacity: (loading || (paymentMode === "cod" && codAdvance > 0 && !codConfirmed)) ? 0.6 : 1,
+                fontFamily: "'DM Sans', sans-serif",
+                transition: "background 0.15s"
+              }}
               onMouseEnter={e => { if (!loading) e.currentTarget.style.background = "#f5d400"; }}
               onMouseLeave={e => e.currentTarget.style.background = "#FEE12B"}
             >
-              {loading ? "Processing..." : paymentMode === "cod" ? `Pay ₹${COD_ADVANCE} Advance →` : `Pay ₹${grandTotal.toLocaleString()} →`}
+              {loading
+                ? "Processing..."
+                : paymentMode === "cod"
+                  ? codAdvance > 0
+                    ? `Pay ₹${codAdvance.toLocaleString()} Advance →`
+                    : "Place COD Order →"
+                  : `Pay ₹${grandTotal.toLocaleString()} →`}
             </button>
 
             {paymentMode === "cod" && (
               <p style={{ textAlign: "center", fontSize: "11px", color: "#aaa", margin: "8px 0 0" }}>
-                ₹{codOnDelivery.toLocaleString()} collected at your doorstep
+                ₹{(codAdvance > 0 ? codOnDelivery : grandTotal).toLocaleString()} collected at your doorstep
               </p>
             )}
             <p style={{ textAlign: "center", fontSize: "12px", color: "#aaa", margin: "12px 0 0" }}>

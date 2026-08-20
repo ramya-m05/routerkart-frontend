@@ -210,7 +210,7 @@ function Orders() {
                       {order.paymentMode === "cod" && (
                         <div style={styles.codInfo}>
                           <span style={{ fontSize: "12px", fontWeight: "700", color: "#cc8800" }}>
-                            💵 COD: ₹{order.advancePaid || 150} paid advance · ₹{order.amountDueOnDelivery?.toLocaleString()} due on delivery
+                            💵 COD: ₹{order.advancePaid ?? 0} paid advance · ₹{order.amountDueOnDelivery?.toLocaleString()} due on delivery
                           </span>
                         </div>
                       )}

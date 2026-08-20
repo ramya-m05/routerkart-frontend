@@ -297,7 +297,7 @@ function AdminOrders() {
                             <>
                               <div style={styles.payRow}>
                                 <span style={{ color: "#888" }}>Advance Paid</span>
-                                <span style={{ fontWeight: "700", color: "#22863a" }}>₹{order.advancePaid || 150}</span>
+                                <span style={{ fontWeight: "700", color: "#22863a" }}>₹{order.advancePaid ?? 0}</span>
                               </div>
                               <div style={styles.payRow}>
                                 <span style={{ color: "#888" }}>Due on Delivery</span>
