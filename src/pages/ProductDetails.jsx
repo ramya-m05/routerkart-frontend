@@ -209,6 +209,9 @@ function ProductDetails() {
     ? (product.images?.length ? product.images : (product.image ? [product.image] : [])).filter(Boolean)
     : [];
 
+  const avgRating = reviews.length ? (reviews.reduce((s, r) => s + Number(r.rating), 0) / reviews.length).toFixed(1) : 0;
+
+
   /* ── fetch ── */
  useEffect(() => {
   if (!id) {
@@ -320,7 +323,10 @@ useEffect(() => {
     document.head.appendChild(metaDescription);
   }
 
-  metaDescription.setAttribute("content", description);
+ metaDescription.setAttribute(
+  "content",
+  description.slice(0, 160)
+);
 
   /* ── CANONICAL ── */
   let canonical = document.querySelector(
@@ -410,16 +416,15 @@ useEffect(() => {
     }),
 
     offers: {
-      "@type": "Offer",
-      url: productUrl,
-      priceCurrency: "INR",
-      price: Number(product.price),
-      availability:
-        Number(product.stock) > 0
-          ? "https://schema.org/InStock"
-          : "https://schema.org/OutOfStock",
-      itemCondition: "https://schema.org/NewCondition",
-    },
+  "@type": "Offer",
+  url: productUrl,
+  priceCurrency: "INR",
+  price: Number(product.price),
+  availability:
+    Number(product.stock) > 0
+      ? "https://schema.org/InStock"
+      : "https://schema.org/OutOfStock",
+},
 
     ...(reviews.length > 0 && {
       aggregateRating: {
@@ -536,9 +541,7 @@ useEffect(() => {
   }, [activeImg, images.length, lightboxIdx]);
 
   const similar   = allProducts.filter(p => p._id !== id && p.category === product?.category).slice(0, 8);
-  const avgRating = reviews.length ? (reviews.reduce((s, r) => s + Number(r.rating), 0) / reviews.length).toFixed(1) : 0;
-
-  /* ── LOADING ── */
+  
  /* ── LOADING ── */
 if (loading) return (
   <div style={{
