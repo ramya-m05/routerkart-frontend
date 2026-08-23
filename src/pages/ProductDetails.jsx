@@ -186,6 +186,7 @@ function ProductDetails() {
   const [allProducts,  setAllProducts]  = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState(null);
+  const [notFound,     setNotFound]     = useState(false);
   const [qty,          setQty]          = useState(1);
   const [activeImg,    setActiveImg]    = useState(0);
   const [lightboxIdx,  setLightboxIdx]  = useState(null);
@@ -209,15 +210,253 @@ function ProductDetails() {
     : [];
 
   /* ── fetch ── */
-  useEffect(() => {
-    if (!id) return;
-    setLoading(true); setError(null); setProduct(null); setActiveImg(0); setQty(1);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    Promise.all([API.get(`/products/${id}`), API.get("/products")])
-      .then(([pRes, allRes]) => { setProduct(pRes.data); setAllProducts(Array.isArray(allRes.data) ? allRes.data : []); })
-      .catch(err => setError(err.response?.status === 404 ? "This product does not exist." : `Failed to load. (${err.response?.status || err.message})`))
-      .finally(() => setLoading(false));
-  }, [id]);
+ useEffect(() => {
+  if (!id) {
+    setLoading(false);
+    setNotFound(true);
+    return;
+  }
+
+  let cancelled = false;
+
+  setLoading(true);
+  setError(null);
+  setNotFound(false);
+  setProduct(null);
+  setAllProducts([]);
+  setActiveImg(0);
+  setQty(1);
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  // Fetch the actual product independently.
+  // This request determines whether the product exists.
+  API.get(`/products/${id}`)
+    .then((res) => {
+      if (cancelled) return;
+
+      if (!res.data) {
+        setNotFound(true);
+        return;
+      }
+
+      setProduct(res.data);
+    })
+    .catch((err) => {
+      if (cancelled) return;
+
+      if (err.response?.status === 404) {
+        setNotFound(true);
+        setError("This product does not exist.");
+      } else {
+        setError(
+          `Failed to load product. (${err.response?.status || err.message})`
+        );
+      }
+    })
+    .finally(() => {
+      if (!cancelled) {
+        setLoading(false);
+      }
+    });
+
+  // Fetch similar products separately.
+  // Failure here must NOT make the main product a 404.
+  API.get("/products")
+    .then((res) => {
+      if (cancelled) return;
+
+      setAllProducts(
+        Array.isArray(res.data) ? res.data : []
+      );
+    })
+    .catch(() => {
+      if (!cancelled) {
+        setAllProducts([]);
+      }
+    });
+
+  return () => {
+    cancelled = true;
+  };
+}, [id]);
+
+/* ── SEO metadata + Product structured data ── */
+useEffect(() => {
+  if (!product) return;
+
+  const productName = product.name?.trim() || "Product";
+
+  const cleanDescription =
+    product.description?.replace(/\s+/g, " ").trim();
+
+  const description =
+    cleanDescription ||
+    `Buy ${productName} online at RouterKart. Check price, availability and product details.`;
+
+  const productUrl = `https://routerkart.in/product/${encodeURIComponent(
+    product._id || id
+  )}`;
+
+  const productImages = (
+    product.images?.length
+      ? product.images
+      : product.image
+        ? [product.image]
+        : []
+  ).filter(Boolean);
+
+  /* ── TITLE ── */
+  document.title = `${productName} | RouterKart`;
+
+  /* ── META DESCRIPTION ── */
+  let metaDescription = document.querySelector(
+    'meta[name="description"]'
+  );
+
+  if (!metaDescription) {
+    metaDescription = document.createElement("meta");
+    metaDescription.setAttribute("name", "description");
+    document.head.appendChild(metaDescription);
+  }
+
+  metaDescription.setAttribute("content", description);
+
+  /* ── CANONICAL ── */
+  let canonical = document.querySelector(
+    'link[rel="canonical"]'
+  );
+
+  if (!canonical) {
+    canonical = document.createElement("link");
+    canonical.setAttribute("rel", "canonical");
+    document.head.appendChild(canonical);
+  }
+
+  canonical.setAttribute("href", productUrl);
+
+  /* ── OPEN GRAPH ── */
+  const setMetaProperty = (property, content) => {
+    let element = document.querySelector(
+      `meta[property="${property}"]`
+    );
+
+    if (!element) {
+      element = document.createElement("meta");
+      element.setAttribute("property", property);
+      document.head.appendChild(element);
+    }
+
+    element.setAttribute("content", content);
+  };
+
+  setMetaProperty("og:title", productName);
+  setMetaProperty("og:description", description);
+  setMetaProperty("og:url", productUrl);
+  setMetaProperty("og:type", "product");
+
+  if (productImages[0]) {
+    setMetaProperty("og:image", productImages[0]);
+  }
+
+  /* ── TWITTER ── */
+  const setMetaName = (name, content) => {
+    let element = document.querySelector(
+      `meta[name="${name}"]`
+    );
+
+    if (!element) {
+      element = document.createElement("meta");
+      element.setAttribute("name", name);
+      document.head.appendChild(element);
+    }
+
+    element.setAttribute("content", content);
+  };
+
+  setMetaName("twitter:card", "summary_large_image");
+  setMetaName("twitter:title", productName);
+  setMetaName("twitter:description", description);
+
+  if (productImages[0]) {
+    setMetaName("twitter:image", productImages[0]);
+  }
+
+  /* ── PRODUCT JSON-LD ── */
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: productName,
+    description,
+    url: productUrl,
+
+    ...(productImages.length > 0 && {
+      image: productImages,
+    }),
+
+    ...(product.sku && {
+      sku: String(product.sku),
+    }),
+
+    ...(product.brand && {
+      brand: {
+        "@type": "Brand",
+        name: String(product.brand),
+      },
+    }),
+
+    ...(product.category && {
+      category: String(product.category),
+    }),
+
+    offers: {
+      "@type": "Offer",
+      url: productUrl,
+      priceCurrency: "INR",
+      price: Number(product.price),
+      availability:
+        Number(product.stock) > 0
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+    },
+
+    ...(reviews.length > 0 && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: Number(avgRating),
+        reviewCount: reviews.length,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    }),
+  };
+
+  let jsonLd = document.querySelector(
+    'script[data-routerkart-product-schema="true"]'
+  );
+
+  if (!jsonLd) {
+    jsonLd = document.createElement("script");
+    jsonLd.type = "application/ld+json";
+    jsonLd.setAttribute(
+      "data-routerkart-product-schema",
+      "true"
+    );
+    document.head.appendChild(jsonLd);
+  }
+
+  jsonLd.textContent = JSON.stringify(schema);
+
+  /* ── CLEANUP WHEN LEAVING PRODUCT PAGE ── */
+  return () => {
+    const existingSchema = document.querySelector(
+      'script[data-routerkart-product-schema="true"]'
+    );
+
+    existingSchema?.remove();
+  };
+}, [product, id, reviews, avgRating]);
 
   /* ── reviews ── */
   useEffect(() => {
@@ -300,28 +539,152 @@ function ProductDetails() {
   const avgRating = reviews.length ? (reviews.reduce((s, r) => s + Number(r.rating), 0) / reviews.length).toFixed(1) : 0;
 
   /* ── LOADING ── */
-  if (loading) return (
-    <div style={{ background: "#F7F7F5", minHeight: "100vh", fontFamily: "'DM Sans', sans-serif" }}>
-      <Navbar setSearch={() => {}} />
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh", flexDirection: "column", gap: "16px" }}>
-        <div style={{ width: "40px", height: "40px", border: "4px solid #eee", borderTop: "4px solid #FEE12B", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-        <p style={{ color: "#aaa", fontSize: "14px", fontFamily: "'DM Sans', sans-serif" }}>Loading product...</p>
-      </div>
-    </div>
-  );
+ /* ── LOADING ── */
+if (loading) return (
+  <div style={{
+    background: "#F7F7F5",
+    minHeight: "100vh",
+    fontFamily: "'DM Sans', sans-serif"
+  }}>
+    <Navbar setSearch={() => {}} />
 
-  /* ── ERROR ── */
-  if (error || !product) return (
-    <div style={{ background: "#F7F7F5", minHeight: "100vh", fontFamily: "'DM Sans', sans-serif" }}>
-      <Navbar setSearch={() => {}} />
-      <div style={{ textAlign: "center", padding: "100px 20px" }}>
-        <div style={{ fontSize: "56px", marginBottom: "16px" }}>😕</div>
-        <h2 style={{ fontWeight: "900", fontSize: "22px", color: "#111", margin: "0 0 8px" }}>Product not found</h2>
-        <p style={{ color: "#999", marginBottom: "24px", fontSize: "14px" }}>{error}</p>
-        <Link to="/store" style={{ display: "inline-block", padding: "13px 28px", background: "#FEE12B", color: "#111", textDecoration: "none", fontWeight: "800", borderRadius: "8px" }}>← Back to Store</Link>
-      </div>
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: "60vh",
+      flexDirection: "column",
+      gap: "16px"
+    }}>
+      <div style={{
+        width: "40px",
+        height: "40px",
+        border: "4px solid #eee",
+        borderTop: "4px solid #FEE12B",
+        borderRadius: "50%",
+        animation: "spin 0.8s linear infinite"
+      }} />
+
+      <p style={{
+        color: "#aaa",
+        fontSize: "14px",
+        fontFamily: "'DM Sans', sans-serif"
+      }}>
+        Loading product...
+      </p>
     </div>
-  );
+  </div>
+);
+
+/* ── REAL 404 ── */
+if (notFound) return (
+  <div style={{
+    background: "#F7F7F5",
+    minHeight: "100vh",
+    fontFamily: "'DM Sans', sans-serif"
+  }}>
+    <Navbar setSearch={() => {}} />
+
+    <div style={{
+      textAlign: "center",
+      padding: "100px 20px"
+    }}>
+      <div style={{
+        fontSize: "56px",
+        marginBottom: "16px"
+      }}>
+        😕
+      </div>
+
+      <h1 style={{
+        fontWeight: "900",
+        fontSize: "22px",
+        color: "#111",
+        margin: "0 0 8px"
+      }}>
+        Product not found
+      </h1>
+
+      <p style={{
+        color: "#999",
+        marginBottom: "24px",
+        fontSize: "14px"
+      }}>
+        {error || "This product does not exist."}
+      </p>
+
+      <Link
+        to="/store"
+        style={{
+          display: "inline-block",
+          padding: "13px 28px",
+          background: "#FEE12B",
+          color: "#111",
+          textDecoration: "none",
+          fontWeight: "800",
+          borderRadius: "8px"
+        }}
+      >
+        ← Back to Store
+      </Link>
+    </div>
+  </div>
+);
+
+/* ── OTHER API ERROR ── */
+if (error || !product) return (
+  <div style={{
+    background: "#F7F7F5",
+    minHeight: "100vh",
+    fontFamily: "'DM Sans', sans-serif"
+  }}>
+    <Navbar setSearch={() => {}} />
+
+    <div style={{
+      textAlign: "center",
+      padding: "100px 20px"
+    }}>
+      <div style={{
+        fontSize: "56px",
+        marginBottom: "16px"
+      }}>
+        ⚠️
+      </div>
+
+      <h1 style={{
+        fontWeight: "900",
+        fontSize: "22px",
+        color: "#111",
+        margin: "0 0 8px"
+      }}>
+        Unable to load product
+      </h1>
+
+      <p style={{
+        color: "#999",
+        marginBottom: "24px",
+        fontSize: "14px"
+      }}>
+        {error || "Something went wrong while loading this product."}
+      </p>
+
+      <Link
+        to="/store"
+        style={{
+          display: "inline-block",
+          padding: "13px 28px",
+          background: "#FEE12B",
+          color: "#111",
+          textDecoration: "none",
+          fontWeight: "800",
+          borderRadius: "8px"
+        }}
+      >
+        ← Back to Store
+      </Link>
+    </div>
+  </div>
+);
 
   const inStock    = product.stock > 0;
   const hasDisc    = product.originalPrice && Number(product.originalPrice) > Number(product.price);
