@@ -284,184 +284,184 @@ function ProductDetails() {
   };
 }, [id]);
 
-/* ── SEO metadata + Product structured data ── */
-useEffect(() => {
-  if (!product) return;
+// /* ── SEO metadata + Product structured data ── */
+// useEffect(() => {
+//   if (!product) return;
 
-  const productName = product.name?.trim() || "Product";
+//   const productName = product.name?.trim() || "Product";
 
-  const cleanDescription =
-    product.description?.replace(/\s+/g, " ").trim();
+//   const cleanDescription =
+//     product.description?.replace(/\s+/g, " ").trim();
 
-  const description =
-    cleanDescription ||
-    `Buy ${productName} online at RouterKart. Check price, availability and product details.`;
+//   const description =
+//     cleanDescription ||
+//     `Buy ${productName} online at RouterKart. Check price, availability and product details.`;
 
-  const productUrl = `https://routerkart.in/product/${encodeURIComponent(
-    product._id || id
-  )}`;
+//   const productUrl = `https://routerkart.in/product/${encodeURIComponent(
+//     product._id || id
+//   )}`;
 
-  const productImages = (
-    product.images?.length
-      ? product.images
-      : product.image
-        ? [product.image]
-        : []
-  ).filter(Boolean);
+//   const productImages = (
+//     product.images?.length
+//       ? product.images
+//       : product.image
+//         ? [product.image]
+//         : []
+//   ).filter(Boolean);
 
-  /* ── TITLE ── */
-  document.title = `${productName} | RouterKart`;
+//   /* ── TITLE ── */
+//   document.title = `${productName} | RouterKart`;
 
-  /* ── META DESCRIPTION ── */
-  let metaDescription = document.querySelector(
-    'meta[name="description"]'
-  );
+//   /* ── META DESCRIPTION ── */
+//   let metaDescription = document.querySelector(
+//     'meta[name="description"]'
+//   );
 
-  if (!metaDescription) {
-    metaDescription = document.createElement("meta");
-    metaDescription.setAttribute("name", "description");
-    document.head.appendChild(metaDescription);
-  }
+//   if (!metaDescription) {
+//     metaDescription = document.createElement("meta");
+//     metaDescription.setAttribute("name", "description");
+//     document.head.appendChild(metaDescription);
+//   }
 
- metaDescription.setAttribute(
-  "content",
-  description.slice(0, 160)
-);
+//  metaDescription.setAttribute(
+//   "content",
+//   description.slice(0, 160)
+// );
 
-  /* ── CANONICAL ── */
-  let canonical = document.querySelector(
-    'link[rel="canonical"]'
-  );
+//   /* ── CANONICAL ── */
+//   let canonical = document.querySelector(
+//     'link[rel="canonical"]'
+//   );
 
-  if (!canonical) {
-    canonical = document.createElement("link");
-    canonical.setAttribute("rel", "canonical");
-    document.head.appendChild(canonical);
-  }
+//   if (!canonical) {
+//     canonical = document.createElement("link");
+//     canonical.setAttribute("rel", "canonical");
+//     document.head.appendChild(canonical);
+//   }
 
-  canonical.setAttribute("href", productUrl);
+//   canonical.setAttribute("href", productUrl);
 
-  /* ── OPEN GRAPH ── */
-  const setMetaProperty = (property, content) => {
-    let element = document.querySelector(
-      `meta[property="${property}"]`
-    );
+//   /* ── OPEN GRAPH ── */
+//   const setMetaProperty = (property, content) => {
+//     let element = document.querySelector(
+//       `meta[property="${property}"]`
+//     );
 
-    if (!element) {
-      element = document.createElement("meta");
-      element.setAttribute("property", property);
-      document.head.appendChild(element);
-    }
+//     if (!element) {
+//       element = document.createElement("meta");
+//       element.setAttribute("property", property);
+//       document.head.appendChild(element);
+//     }
 
-    element.setAttribute("content", content);
-  };
+//     element.setAttribute("content", content);
+//   };
 
-  setMetaProperty("og:title", productName);
-  setMetaProperty("og:description", description);
-  setMetaProperty("og:url", productUrl);
-  setMetaProperty("og:type", "product");
+//   setMetaProperty("og:title", productName);
+//   setMetaProperty("og:description", description);
+//   setMetaProperty("og:url", productUrl);
+//   setMetaProperty("og:type", "product");
 
-  if (productImages[0]) {
-    setMetaProperty("og:image", productImages[0]);
-  }
+//   if (productImages[0]) {
+//     setMetaProperty("og:image", productImages[0]);
+//   }
 
-  /* ── TWITTER ── */
-  const setMetaName = (name, content) => {
-    let element = document.querySelector(
-      `meta[name="${name}"]`
-    );
+//   /* ── TWITTER ── */
+//   const setMetaName = (name, content) => {
+//     let element = document.querySelector(
+//       `meta[name="${name}"]`
+//     );
 
-    if (!element) {
-      element = document.createElement("meta");
-      element.setAttribute("name", name);
-      document.head.appendChild(element);
-    }
+//     if (!element) {
+//       element = document.createElement("meta");
+//       element.setAttribute("name", name);
+//       document.head.appendChild(element);
+//     }
 
-    element.setAttribute("content", content);
-  };
+//     element.setAttribute("content", content);
+//   };
 
-  setMetaName("twitter:card", "summary_large_image");
-  setMetaName("twitter:title", productName);
-  setMetaName("twitter:description", description);
+//   setMetaName("twitter:card", "summary_large_image");
+//   setMetaName("twitter:title", productName);
+//   setMetaName("twitter:description", description);
 
-  if (productImages[0]) {
-    setMetaName("twitter:image", productImages[0]);
-  }
+//   if (productImages[0]) {
+//     setMetaName("twitter:image", productImages[0]);
+//   }
 
-  /* ── PRODUCT JSON-LD ── */
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: productName,
-    description,
-    url: productUrl,
+//   /* ── PRODUCT JSON-LD ── */
+//   const schema = {
+//     "@context": "https://schema.org",
+//     "@type": "Product",
+//     name: productName,
+//     description,
+//     url: productUrl,
 
-    ...(productImages.length > 0 && {
-      image: productImages,
-    }),
+//     ...(productImages.length > 0 && {
+//       image: productImages,
+//     }),
 
-    ...(product.sku && {
-      sku: String(product.sku),
-    }),
+//     ...(product.sku && {
+//       sku: String(product.sku),
+//     }),
 
-    ...(product.brand && {
-      brand: {
-        "@type": "Brand",
-        name: String(product.brand),
-      },
-    }),
+//     ...(product.brand && {
+//       brand: {
+//         "@type": "Brand",
+//         name: String(product.brand),
+//       },
+//     }),
 
-    ...(product.category && {
-      category: String(product.category),
-    }),
+//     ...(product.category && {
+//       category: String(product.category),
+//     }),
 
-    offers: {
-  "@type": "Offer",
-  url: productUrl,
-  priceCurrency: "INR",
-  price: Number(product.price),
-  availability:
-    Number(product.stock) > 0
-      ? "https://schema.org/InStock"
-      : "https://schema.org/OutOfStock",
-},
+//     offers: {
+//   "@type": "Offer",
+//   url: productUrl,
+//   priceCurrency: "INR",
+//   price: Number(product.price),
+//   availability:
+//     Number(product.stock) > 0
+//       ? "https://schema.org/InStock"
+//       : "https://schema.org/OutOfStock",
+// },
 
-    ...(reviews.length > 0 && {
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: Number(avgRating),
-        reviewCount: reviews.length,
-        bestRating: 5,
-        worstRating: 1,
-      },
-    }),
-  };
+//     ...(reviews.length > 0 && {
+//       aggregateRating: {
+//         "@type": "AggregateRating",
+//         ratingValue: Number(avgRating),
+//         reviewCount: reviews.length,
+//         bestRating: 5,
+//         worstRating: 1,
+//       },
+//     }),
+//   };
 
-  let jsonLd = document.querySelector(
-    'script[data-routerkart-product-schema="true"]'
-  );
+//   let jsonLd = document.querySelector(
+//     'script[data-routerkart-product-schema="true"]'
+//   );
 
-  if (!jsonLd) {
-    jsonLd = document.createElement("script");
-    jsonLd.type = "application/ld+json";
-    jsonLd.setAttribute(
-      "data-routerkart-product-schema",
-      "true"
-    );
-    document.head.appendChild(jsonLd);
-  }
+//   if (!jsonLd) {
+//     jsonLd = document.createElement("script");
+//     jsonLd.type = "application/ld+json";
+//     jsonLd.setAttribute(
+//       "data-routerkart-product-schema",
+//       "true"
+//     );
+//     document.head.appendChild(jsonLd);
+//   }
 
-  jsonLd.textContent = JSON.stringify(schema);
+//   jsonLd.textContent = JSON.stringify(schema);
 
-  /* ── CLEANUP WHEN LEAVING PRODUCT PAGE ── */
-  return () => {
-    const existingSchema = document.querySelector(
-      'script[data-routerkart-product-schema="true"]'
-    );
+//   /* ── CLEANUP WHEN LEAVING PRODUCT PAGE ── */
+//   return () => {
+//     const existingSchema = document.querySelector(
+//       'script[data-routerkart-product-schema="true"]'
+//     );
 
-    existingSchema?.remove();
-  };
-}, [product, id, reviews, avgRating]);
+//     existingSchema?.remove();
+//   };
+// }, [product, id, reviews, avgRating]);
 
   /* ── reviews ── */
   useEffect(() => {
