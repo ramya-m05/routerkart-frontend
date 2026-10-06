@@ -1,42 +1,66 @@
+"use client";
+
 import { createContext, useState, useEffect, useContext } from "react";
 import toast from "react-hot-toast";
 
-export const WishlistContext = createContext();
-
-// ✅ Load once at init — lazy initialization pattern
-const loadWishlist = () => {
-  try {
-    return JSON.parse(localStorage.getItem("wishlist")) || [];
-  } catch {
-    return [];
-  }
-};
+export const WishlistContext = createContext(null);
 
 export const WishlistProvider = ({ children }) => {
-  // ✅ Lazy initial state
-  const [wishlist, setWishlist] = useState(loadWishlist);
+  const [wishlist, setWishlist] = useState([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // ✅ Save on every change
   useEffect(() => {
-    localStorage.setItem("wishlist", JSON.stringify(wishlist));
-  }, [wishlist]);
+    try {
+      const stored = localStorage.getItem("wishlist");
+      if (stored) {
+        setWishlist(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error("Failed to load wishlist from localStorage", e);
+    } finally {
+      setIsInitialized(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    try {
+      localStorage.setItem("wishlist", JSON.stringify(wishlist));
+    } catch (e) {
+      console.error("Failed to save wishlist to localStorage", e);
+    }
+  }, [wishlist, isInitialized]);
 
   const addToWishlist = (product) => {
-    const exists = wishlist.find((i) => i._id === product._id);
-    if (exists) {
-      toast("Already in wishlist ❤️");
-      return;
-    }
-    setWishlist((prev) => [...prev, product]);
-    toast.success("Added to wishlist ❤️");
+    setWishlist((prev) => {
+      if (prev.some((item) => item._id === product._id)) {
+        toast("Already in wishlist", { icon: "ℹ️" });
+        return prev;
+      }
+      toast.success("Added to wishlist");
+      return [
+        ...prev,
+        {
+          _id: product._id,
+          name: product.name,
+          price: product.price,
+          originalPrice: product.originalPrice,
+          image: product.image || (product.images && product.images[0]) || "",
+          stock: product.stock,
+          category: product.category,
+        },
+      ];
+    });
   };
 
   const removeFromWishlist = (id) => {
-    setWishlist((prev) => prev.filter((i) => i._id !== id));
+    setWishlist((prev) => prev.filter((item) => item._id !== id));
     toast.success("Removed from wishlist");
   };
 
-  const isInWishlist = (id) => wishlist.some((i) => i._id === id);
+  const isInWishlist = (id) => {
+    return wishlist.some((item) => item._id === id);
+  };
 
   return (
     <WishlistContext.Provider
@@ -52,5 +76,4 @@ export const WishlistProvider = ({ children }) => {
   );
 };
 
-// ✅ Custom hook
 export const useWishlist = () => useContext(WishlistContext);

@@ -1,69 +1,47 @@
-// WhatsAppButton.jsx
-// Drop this anywhere inside your App (e.g. right before </CartProvider> in App.jsx)
-// Set WHATSAPP_NUMBER to your business WhatsApp number with country code (no + or spaces)
+"use client";
 
-const WHATSAPP_NUMBER = "918073919667"; // ← Replace with your actual number
+const WHATSAPP_NUMBER = "918073919667";
 const WHATSAPP_MESSAGE = "Hi RouterKart! I need help with a product.";
 
-function WhatsAppButton() {
-  const href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
+export default function WhatsAppButton() {
+  const handleClick = () => {
+    const encoded = encodeURIComponent(WHATSAPP_MESSAGE);
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`, "_blank");
+  };
 
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      title="Chat with us on WhatsApp"
+    <button
+      onClick={handleClick}
+      aria-label="Chat on WhatsApp"
       style={{
         position: "fixed",
         bottom: "24px",
         right: "24px",
-        zIndex: 9000,
+        zIndex: 999,
         width: "56px",
         height: "56px",
         borderRadius: "50%",
         background: "#25D366",
+        border: "none",
+        boxShadow: "0 4px 16px rgba(37,211,102,0.4)",
+        cursor: "pointer",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        boxShadow: "0 4px 20px rgba(37,211,102,0.45)",
-        textDecoration: "none",
         transition: "transform 0.2s, box-shadow 0.2s",
-        animation: "waPulse 2.5s ease-in-out infinite",
       }}
-      onMouseEnter={e => {
-        e.currentTarget.style.transform = "scale(1.12)";
-        e.currentTarget.style.boxShadow = "0 6px 28px rgba(37,211,102,0.65)";
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "scale(1.1)";
+        e.currentTarget.style.boxShadow = "0 6px 20px rgba(37,211,102,0.6)";
       }}
-      onMouseLeave={e => {
+      onMouseLeave={(e) => {
         e.currentTarget.style.transform = "scale(1)";
-        e.currentTarget.style.boxShadow = "0 4px 20px rgba(37,211,102,0.45)";
+        e.currentTarget.style.boxShadow = "0 4px 16px rgba(37,211,102,0.4)";
       }}
     >
-      {/* WhatsApp SVG icon */}
-      <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
-        <path
-          d="M16 2C8.268 2 2 8.268 2 16c0 2.417.638 4.683 1.752 6.645L2 30l7.573-1.727A13.934 13.934 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2z"
-          fill="#25D366"
-        />
-        <path
-          d="M16 3.5C9.096 3.5 3.5 9.096 3.5 16c0 2.29.6 4.44 1.65 6.3L3.5 28.5l6.35-1.63A12.44 12.44 0 0016 28.5c6.904 0 12.5-5.596 12.5-12.5S22.904 3.5 16 3.5z"
-          fill="white"
-        />
-        <path
-          d="M22.5 19.45c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.47-.89-.79-1.48-1.76-1.66-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51-.17-.01-.37-.01-.57-.01-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.87 1.22 3.07.15.2 2.1 3.2 5.08 4.49.71.31 1.27.49 1.7.63.72.23 1.37.2 1.88.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.19-.57-.34z"
-          fill="#25D366"
-        />
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="white">
+        <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.634.073-1.854-.424-1.488-.607-2.484-2.126-2.558-2.227-.074-.1-.611-.814-.611-1.554 0-.74.385-1.103.524-1.25.139-.148.303-.185.405-.185.102 0 .204.001.294.006.095.004.223-.036.348.266.13.313.444 1.083.483 1.162.039.08.065.172.012.277-.052.105-.078.172-.156.262-.078.09-.163.201-.233.27-.078.077-.16.161-.069.317.091.156.403.666.866 1.079.595.53 1.096.694 1.252.772.156.078.247.069.339-.036.092-.105.391-.456.495-.612.104-.156.208-.13.347-.078.139.052.883.416 1.035.492.152.076.253.113.29.176.037.063.037.368-.107.773z" />
       </svg>
-
-      <style>{`
-        @keyframes waPulse {
-          0%, 100% { box-shadow: 0 4px 20px rgba(37,211,102,0.45); }
-          50% { box-shadow: 0 4px 32px rgba(37,211,102,0.75), 0 0 0 8px rgba(37,211,102,0.12); }
-        }
-      `}</style>
-    </a>
+    </button>
   );
 }
-
-export default WhatsAppButton;

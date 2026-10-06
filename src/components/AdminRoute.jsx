@@ -1,16 +1,31 @@
-import { Navigate } from "react-router-dom";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getUser, getToken } from "../utils/auth";
+
 const AdminRoute = ({ children }) => {
-  const token = getToken();
-  const user = getUser();
+  const router = useRouter();
+  const [authorized, setAuthorized] = useState(false);
 
-  if (!token || !user) {
-    return <Navigate to="/login" replace />;
-  }
+  useEffect(() => {
+    const token = getToken();
+    const user = getUser();
 
-  if (user.role !== "admin") {
-    return <Navigate to="/store" replace />;
-  }
+    if (!token || !user) {
+      router.replace("/login");
+      return;
+    }
+
+    if (user.role !== "admin") {
+      router.replace("/store");
+      return;
+    }
+
+    setAuthorized(true);
+  }, [router]);
+
+  if (!authorized) return null;
 
   return children;
 };

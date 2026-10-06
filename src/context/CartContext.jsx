@@ -1,77 +1,104 @@
-import { createContext, useState, useEffect } from "react";
+"use client";
 
-export const CartContext = createContext();
+import { createContext, useState, useEffect, useContext } from "react";
 
-export function CartProvider({ children }) {
+export const CartContext = createContext(null);
 
-  const [cart, setCart] = useState(() => {
-    const stored = localStorage.getItem("cart");
-    return stored ? JSON.parse(stored) : [];
-  });
+export const CartProvider = ({ children }) => {
+  const [cart, setCart] = useState([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // Load from localStorage on mount
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
-  }, [cart]);
-
-  // ✅ ADD TO CART
-  const addToCart = (product) => {
-    setCart(prev => {
-      const exists = prev.find(p => p._id === product._id);
-      if (exists) {
-        return prev.map(p =>
-          p._id === product._id
-            ? { ...p, qty: p.qty + 1 }
-            : p
-        );
+    try {
+      const stored = localStorage.getItem("cart");
+      if (stored) {
+        setCart(JSON.parse(stored));
       }
-      return [...prev, { ...product, qty: 1 }];
+    } catch (e) {
+      console.error("Failed to load cart from localStorage", e);
+    } finally {
+      setIsInitialized(true);
+    }
+  }, []);
+
+  // Save to localStorage on cart change
+  useEffect(() => {
+    if (!isInitialized) return;
+    try {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    } catch (e) {
+      console.error("Failed to save cart to localStorage", e);
+    }
+  }, [cart, isInitialized]);
+
+  const addToCart = (product, quantity = 1) => {
+    setCart((prevCart) => {
+      const existing = prevCart.find((item) => item._id === product._id);
+      if (existing) {
+        return prevCart.map((item) =>
+          item._id === product._id
+            ? { ...item, qty: item.qty + quantity }
+            : item
+        );
+      } else {
+        return [
+          ...prevCart,
+          {
+            _id: product._id,
+            name: product.name,
+            price: product.price,
+            image: product.image || (product.images && product.images[0]) || "",
+            stock: product.stock,
+            qty: quantity,
+            advancePayment: product.advancePayment,
+            advanceAmount: product.advanceAmount,
+          },
+        ];
+      }
     });
   };
 
-  // ✅ INCREASE
-  const increaseQty = (id) => {
-    setCart(prev =>
-      prev.map(item =>
-        item._id === id
-          ? { ...item, qty: item.qty + 1 }
-          : item
-      )
-    );
-  };
-
-  // ✅ DECREASE
-  const decreaseQty = (id) => {
-    setCart(prev =>
-      prev
-        .map(item =>
-          item._id === id
-            ? { ...item, qty: item.qty - 1 }
-            : item
-        )
-        .filter(item => item.qty > 0) // remove if 0
-    );
-  };
-
-  // ✅ REMOVE
   const removeFromCart = (id) => {
-    setCart(prev => prev.filter(item => item._id !== id));
+    setCart((prev) => prev.filter((item) => item._id !== id));
   };
+
+  const updateQuantity = (id, quantity) => {
+    if (quantity <= 0) {
+      removeFromCart(id);
+      return;
+    }
+    setCart((prev) =>
+      prev.map((item) => (item._id === id ? { ...item, qty: quantity } : item))
+    );
+  };
+
   const clearCart = () => {
-  setCart([]);
-  localStorage.removeItem("cart");
-};
+    setCart([]);
+  };
+
+  const totalAmount = cart.reduce(
+    (sum, item) => sum + (item.price || 0) * (item.qty || 1),
+    0
+  );
+
+  const totalItems = cart.reduce((sum, item) => sum + (item.qty || 1), 0);
 
   return (
-    <CartContext.Provider value={{
-      cart,
-      setCart,
-      addToCart,
-      increaseQty,
-      decreaseQty,
-      removeFromCart,
-      clearCart
-    }}>
+    <CartContext.Provider
+      value={{
+        cart,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        totalAmount,
+        totalItems,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
-}
+};
+
+export const useCart = () => useContext(CartContext);
