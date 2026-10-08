@@ -38,19 +38,20 @@ export const CartProvider = ({ children }) => {
       if (existing) {
         return prevCart.map((item) =>
           item._id === product._id
-            ? { ...item, qty: item.qty + quantity }
+            ? { ...item, qty: (item.qty || 1) + (Number(quantity) || 1) }
             : item
         );
       } else {
         return [
           ...prevCart,
           {
+            ...product,
             _id: product._id,
             name: product.name,
             price: product.price,
             image: product.image || (product.images && product.images[0]) || "",
             stock: product.stock,
-            qty: quantity,
+            qty: Number(quantity) || 1,
             advancePayment: product.advancePayment,
             advanceAmount: product.advanceAmount,
           },
@@ -61,6 +62,24 @@ export const CartProvider = ({ children }) => {
 
   const removeFromCart = (id) => {
     setCart((prev) => prev.filter((item) => item._id !== id));
+  };
+
+  const increaseQty = (id) => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item._id === id ? { ...item, qty: (item.qty || 1) + 1 } : item
+      )
+    );
+  };
+
+  const decreaseQty = (id) => {
+    setCart((prev) =>
+      prev
+        .map((item) =>
+          item._id === id ? { ...item, qty: (item.qty || 1) - 1 } : item
+        )
+        .filter((item) => item.qty > 0)
+    );
   };
 
   const updateQuantity = (id, quantity) => {
@@ -75,6 +94,11 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = () => {
     setCart([]);
+    try {
+      localStorage.removeItem("cart");
+    } catch (e) {
+      console.error("Failed to clear cart from localStorage", e);
+    }
   };
 
   const totalAmount = cart.reduce(
@@ -88,7 +112,10 @@ export const CartProvider = ({ children }) => {
     <CartContext.Provider
       value={{
         cart,
+        setCart,
         addToCart,
+        increaseQty,
+        decreaseQty,
         removeFromCart,
         updateQuantity,
         clearCart,
