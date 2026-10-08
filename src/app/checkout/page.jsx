@@ -271,11 +271,7 @@ export default function Checkout() {
         amount,
       });
 
-      const razorpayKey =
-        process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-        process.env.NEXT_PUBLIC_RAZORPAY_KEY ||
-        "rzp_test_5gT9EaR5iZp4kH";
-
+      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
       const options = {
         key: razorpayKey,
         amount: data.amount,
