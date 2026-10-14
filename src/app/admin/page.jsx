@@ -56,6 +56,10 @@ export default function AdminDashboard() {
   const [deliveryDays, setDeliveryDays] = useState("5");
   const [advancePayment, setAdvancePayment] = useState(false);
   const [advanceAmount, setAdvanceAmount] = useState("");
+  const [returnEligible, setReturnEligible] = useState(false);
+  const [replacementEligible, setReplacementEligible] = useState(false);
+  const [returnWindowDays, setReturnWindowDays] = useState("7");
+  const [policyNotes, setPolicyNotes] = useState("");
   const [editingId, setEditingId] = useState(null);
 
   /* ── categories ── */
@@ -297,6 +301,10 @@ export default function AdminDashboard() {
         return false;
       }
     }
+    if (returnEligible && (!returnWindowDays || +returnWindowDays < 1 || +returnWindowDays > 365)) {
+      toast.error("Return window must be between 1 and 365 days");
+      return false;
+    }
     return true;
   };
 
@@ -317,6 +325,12 @@ export default function AdminDashboard() {
     if (originalPrice) fd.append("originalPrice", Number(originalPrice));
     if (brand) fd.append("brand", brand.trim());
     if (sku) fd.append("sku", sku.trim());
+
+    // Return & Replacement Policy
+    fd.append("returnEligible", returnEligible ? "true" : "false");
+    fd.append("replacementEligible", replacementEligible ? "true" : "false");
+    fd.append("returnWindowDays", Number(returnWindowDays) || 7);
+    fd.append("policyNotes", policyNotes || "");
 
     // existing Cloudinary URLs
     const existing = imageSlots
@@ -394,6 +408,10 @@ export default function AdminDashboard() {
     setDeliveryDays(p.deliveryDays || "5");
     setAdvancePayment(Boolean(p.advancePayment));
     setAdvanceAmount(p.advanceAmount ? String(p.advanceAmount) : "");
+    setReturnEligible(Boolean(p.returnEligible));
+    setReplacementEligible(Boolean(p.replacementEligible));
+    setReturnWindowDays(p.returnWindowDays ? String(p.returnWindowDays) : "7");
+    setPolicyNotes(p.policyNotes || "");
 
     const fromArray = Array.isArray(p.images) ? p.images : [];
     const fromSingle =
@@ -424,6 +442,10 @@ export default function AdminDashboard() {
     setDeliveryDays("5");
     setAdvancePayment(false);
     setAdvanceAmount("");
+    setReturnEligible(false);
+    setReplacementEligible(false);
+    setReturnWindowDays("7");
+    setPolicyNotes("");
     imageSlots.forEach((s) => {
       if (!s.existing && s.preview?.startsWith("blob:"))
         URL.revokeObjectURL(s.preview);
@@ -2131,6 +2153,230 @@ export default function AdminDashboard() {
                       )}
                   </div>
                 )}
+              </div>
+
+              {/* RETURN & REPLACEMENT POLICY */}
+              <div
+                style={{
+                  background: "#f9f9f8",
+                  border: "1px solid #e8e8e5",
+                  borderRadius: "10px",
+                  padding: "16px 18px",
+                  marginBottom: "14px",
+                }}
+              >
+                <label style={{ ...lbl, marginBottom: "12px" }}>
+                  RETURN & REPLACEMENT POLICY
+                </label>
+
+                {/* Returns toggle */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "12px",
+                    marginBottom: "12px",
+                  }}
+                >
+                  <div>
+                    <p
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: "700",
+                        color: "#333",
+                        margin: "0 0 2px",
+                      }}
+                    >
+                      🔄 Returns Eligible
+                    </p>
+                    <p
+                      style={{
+                        fontSize: "12px",
+                        color: "#777",
+                        margin: 0,
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      Allow customers to return this product within the
+                      specified window
+                    </p>
+                  </div>
+                  <div
+                    onClick={() => setReturnEligible((prev) => !prev)}
+                    role="switch"
+                    aria-checked={returnEligible}
+                    style={{
+                      width: "48px",
+                      height: "26px",
+                      borderRadius: "13px",
+                      background: returnEligible ? "#FEE12B" : "#E5E7EB",
+                      cursor: "pointer",
+                      position: "relative",
+                      transition:
+                        "background 0.25s ease, box-shadow 0.25s ease",
+                      boxShadow: returnEligible
+                        ? "0 2px 6px rgba(254, 225, 43, 0.4)"
+                        : "inset 0 1px 2px rgba(0,0,0,0.08)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "50%",
+                        background: returnEligible ? "#111111" : "#FFFFFF",
+                        position: "absolute",
+                        top: "3px",
+                        left: returnEligible ? "25px" : "3px",
+                        transition:
+                          "left 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s ease",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Return window (shown only when returns enabled) */}
+                {returnEligible && (
+                  <div
+                    style={{
+                      marginBottom: "12px",
+                      paddingTop: "10px",
+                      borderTop: "1px solid #ebebea",
+                    }}
+                  >
+                    <label style={lbl}>RETURN WINDOW (DAYS)</label>
+                    <input
+                      style={inp}
+                      placeholder="e.g. 7"
+                      type="number"
+                      min="1"
+                      max="365"
+                      value={returnWindowDays}
+                      onChange={(e) => setReturnWindowDays(e.target.value)}
+                      onFocus={fo}
+                      onBlur={bl}
+                    />
+                  </div>
+                )}
+
+                {/* Replacement toggle */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "12px",
+                    paddingTop: "10px",
+                    borderTop: "1px solid #ebebea",
+                    marginBottom: "12px",
+                  }}
+                >
+                  <div>
+                    <p
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: "700",
+                        color: "#333",
+                        margin: "0 0 2px",
+                      }}
+                    >
+                      🔁 Replacement Eligible
+                    </p>
+                    <p
+                      style={{
+                        fontSize: "12px",
+                        color: "#777",
+                        margin: 0,
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      Allow customers to request a replacement for this product
+                    </p>
+                  </div>
+                  <div
+                    onClick={() =>
+                      setReplacementEligible((prev) => !prev)
+                    }
+                    role="switch"
+                    aria-checked={replacementEligible}
+                    style={{
+                      width: "48px",
+                      height: "26px",
+                      borderRadius: "13px",
+                      background: replacementEligible
+                        ? "#FEE12B"
+                        : "#E5E7EB",
+                      cursor: "pointer",
+                      position: "relative",
+                      transition:
+                        "background 0.25s ease, box-shadow 0.25s ease",
+                      boxShadow: replacementEligible
+                        ? "0 2px 6px rgba(254, 225, 43, 0.4)"
+                        : "inset 0 1px 2px rgba(0,0,0,0.08)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "50%",
+                        background: replacementEligible
+                          ? "#111111"
+                          : "#FFFFFF",
+                        position: "absolute",
+                        top: "3px",
+                        left: replacementEligible ? "25px" : "3px",
+                        transition:
+                          "left 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s ease",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Policy Notes */}
+                <div
+                  style={{
+                    paddingTop: "10px",
+                    borderTop: "1px solid #ebebea",
+                  }}
+                >
+                  <label style={lbl}>POLICY NOTES (OPTIONAL)</label>
+                  <textarea
+                    style={{
+                      ...inp,
+                      height: "60px",
+                      resize: "vertical",
+                    }}
+                    placeholder="e.g. Return only if sealed packaging is intact"
+                    value={policyNotes}
+                    onChange={(e) => setPolicyNotes(e.target.value)}
+                    onFocus={fo}
+                    onBlur={bl}
+                  />
+                </div>
+
+                {/* Summary */}
+                <div
+                  style={{
+                    marginTop: "10px",
+                    fontSize: "11px",
+                    color: "#16a34a",
+                    fontWeight: "700",
+                  }}
+                >
+                  {returnEligible && replacementEligible
+                    ? `✅ ${returnWindowDays || 7}-day returns & replacements`
+                    : returnEligible
+                    ? `✅ ${returnWindowDays || 7}-day returns only`
+                    : replacementEligible
+                    ? "✅ Replacements only (no ordinary returns)"
+                    : "⚠️ No ordinary returns or replacements"}
+                </div>
               </div>
 
               <div

@@ -1644,12 +1644,21 @@ export default function ProductDetails() {
                 marginBottom: "14px",
               }}
             >
-              {[
-                "🚚 Free Delivery",
-                "🔒 Secure Payment",
-                "🔄 7-Day Returns",
-                "✅ Genuine",
-              ].map((t, i) => (
+              {(() => {
+                const badges = [
+                  "🚚 Free Delivery",
+                  "🔒 Secure Payment",
+                ];
+                if (product.returnEligible) {
+                  const days = product.returnWindowDays || 7;
+                  badges.push(`🔄 ${days}-Day Returns`);
+                }
+                if (product.replacementEligible) {
+                  badges.push("🔁 Replacement Available");
+                }
+                badges.push("✅ Genuine");
+                return badges;
+              })().map((t, i) => (
                 <span
                   key={i}
                   style={{
@@ -1665,6 +1674,43 @@ export default function ProductDetails() {
                   {t}
                 </span>
               ))}
+            </div>
+
+            {/* Return & Replacement policy details */}
+            <div
+              style={{
+                background: product.returnEligible || product.replacementEligible ? "#F0FDF4" : "#F7F7F5",
+                border: `1px solid ${product.returnEligible || product.replacementEligible ? "#bbf7d0" : "#e5e5e5"}`,
+                borderRadius: "10px",
+                padding: "12px 16px",
+                marginBottom: "14px",
+                fontSize: "13px",
+                lineHeight: 1.6,
+              }}
+            >
+              {product.returnEligible && (
+                <p style={{ margin: "0 0 4px", color: "#15803d", fontWeight: "700" }}>
+                  🔄 {product.returnWindowDays || 7}-day return window
+                </p>
+              )}
+              {product.replacementEligible && (
+                <p style={{ margin: "0 0 4px", color: "#15803d", fontWeight: "700" }}>
+                  🔁 Replacement eligible
+                </p>
+              )}
+              {!product.returnEligible && !product.replacementEligible && (
+                <p style={{ margin: "0 0 4px", color: "#555", fontWeight: "600" }}>
+                  ℹ️ This product is not eligible for ordinary returns or replacements.
+                </p>
+              )}
+              {product.policyNotes && (
+                <p style={{ margin: "0 0 4px", color: "#555", fontSize: "12px" }}>
+                  📝 {product.policyNotes}
+                </p>
+              )}
+              <p style={{ margin: 0, color: "#999", fontSize: "11px" }}>
+                Your statutory rights for damaged, defective, or misdescribed items are not affected.
+              </p>
             </div>
             {(product.brand || product.sku) && (
               <div
