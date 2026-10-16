@@ -58,6 +58,23 @@ const lbl = {
 };
 
 export default function Checkout() {
+  // ── Auth guard ──
+  const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const token = localStorage.getItem("token");
+    const user = (() => {
+      try { return JSON.parse(localStorage.getItem("user")); } catch { return null; }
+    })();
+    if (!token || !user) {
+      router.replace("/login?returnTo=%2Fcheckout");
+      return;
+    }
+    setAuthChecked(true);
+  }, [router]);
+
   // Delivery fields
   const [doorNo, setDoorNo] = useState("");
   const [houseName, setHouseName] = useState("");
@@ -74,7 +91,6 @@ export default function Checkout() {
   const [codConfirmed, setCodConfirmed] = useState(false);
 
   const { cart, setCart, clearCart } = useContext(CartContext);
-  const router = useRouter();
   const isMobile = useIsMobile();
   const [addresses, setAddresses] = useState([]);
 
@@ -412,6 +428,9 @@ export default function Checkout() {
   };
   const onFocus = (e) => (e.target.style.borderColor = "#FEE12B");
   const onBlur = (e) => (e.target.style.borderColor = "#e5e5e5");
+
+  // Don't render checkout until auth is verified
+  if (!authChecked) return null;
 
   return (
     <div

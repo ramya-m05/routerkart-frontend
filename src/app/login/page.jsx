@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import API from "../../services/api";
 import toast from "react-hot-toast";
@@ -10,9 +10,35 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 const isValidEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 const isValidPhone = (v) => /^\d{10}$/.test(v.trim());
 
+/* Allowlist of internal paths that returnTo may redirect to */
+const SAFE_RETURN_PREFIXES = [
+  "/checkout",
+  "/store",
+  "/cart",
+  "/orders",
+  "/wishlist",
+  "/account",
+  "/p/",
+  "/product/",
+];
+
+function getSafeReturnTo(raw) {
+  if (!raw || typeof raw !== "string") return null;
+  const decoded = decodeURIComponent(raw);
+  // Must start with / and not // (no protocol-relative URLs)
+  if (!decoded.startsWith("/") || decoded.startsWith("//")) return null;
+  // Must match an allowed prefix
+  const lower = decoded.toLowerCase();
+  if (SAFE_RETURN_PREFIXES.some((p) => lower.startsWith(p))) return decoded;
+  return null;
+}
+
 export default function Login() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isMobile = useIsMobile();
+
+  const returnTo = getSafeReturnTo(searchParams.get("returnTo"));
 
   const [identifier, setIdentifier] = useState(""); // email or phone
   const [password, setPassword] = useState("");
@@ -23,11 +49,17 @@ export default function Login() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const token = localStorage.getItem("token");
-    const user = JSON.parse(localStorage.getItem("user") || "null");
+    const user = (() => {
+      try { return JSON.parse(localStorage.getItem("user")); } catch { return null; }
+    })();
     if (token && user) {
-      user.role === "admin" ? router.push("/admin") : router.push("/store");
+      if (user.role === "admin") {
+        router.push("/admin");
+      } else {
+        router.push(returnTo || "/store");
+      }
     }
-  }, [router]);
+  }, [router, returnTo]);
 
   const handleLogin = async () => {
     const val = identifier.trim();
@@ -73,7 +105,12 @@ export default function Login() {
       }
 
       toast.success("Login successful 🚀");
-      res.data.role === "admin" ? router.push("/admin") : router.push("/store");
+
+      if (res.data.role === "admin") {
+        router.push("/admin");
+      } else {
+        router.push(returnTo || "/store");
+      }
     } catch (err) {
       const msg = err.response?.data?.message;
       if (msg === "User not found")
@@ -448,7 +485,7 @@ export default function Login() {
           </div>
 
           <Link
-            href="/signup"
+            href={returnTo ? `/signup?returnTo=${encodeURIComponent(returnTo)}` : "/signup"}
             style={{
               display: "block",
               width: "100%",

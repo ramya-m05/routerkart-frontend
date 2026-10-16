@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import API from "../../services/api";
 import toast from "react-hot-toast";
@@ -9,9 +9,33 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 
 const isValidEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
+/* Allowlist of internal paths that returnTo may redirect to */
+const SAFE_RETURN_PREFIXES = [
+  "/checkout",
+  "/store",
+  "/cart",
+  "/orders",
+  "/wishlist",
+  "/account",
+  "/p/",
+  "/product/",
+];
+
+function getSafeReturnTo(raw) {
+  if (!raw || typeof raw !== "string") return null;
+  const decoded = decodeURIComponent(raw);
+  if (!decoded.startsWith("/") || decoded.startsWith("//")) return null;
+  const lower = decoded.toLowerCase();
+  if (SAFE_RETURN_PREFIXES.some((p) => lower.startsWith(p))) return decoded;
+  return null;
+}
+
 export default function Signup() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isMobile = useIsMobile();
+
+  const returnTo = getSafeReturnTo(searchParams.get("returnTo"));
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -91,7 +115,7 @@ export default function Signup() {
 
       res.data.role === "admin"
         ? router.push("/admin")
-        : router.push("/store");
+        : router.push(returnTo || "/store");
     } catch (err) {
       toast.error(err.response?.data?.message || "Signup failed");
     } finally {
@@ -597,7 +621,7 @@ export default function Signup() {
           </div>
 
           <Link
-            href="/login"
+            href={returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : "/login"}
             style={{
               display: "block",
               padding: "13px",
