@@ -9,6 +9,7 @@ import { CartContext } from "../../../context/CartContext";
 import { WishlistContext } from "../../../context/WishlistContext";
 import toast from "react-hot-toast";
 import { useIsMobile } from "../../../hooks/useIsMobile";
+import ProductFaq from "../../../components/ProductFaq";
 
 const getDeliveryDate = (days = 5) => {
   const d = new Date();
@@ -2232,6 +2233,9 @@ export default function ProductDetails({ initialProduct = null }) {
             )}
           </div>
         </div>
+
+        {/* ══ PRODUCT FAQS ════════════════════════════════════ */}
+        <ProductFaq product={product} />
 
         {/* ══ SIMILAR PRODUCTS ═══════════════════════════════ */}
         {similar.length > 0 && (

@@ -17,6 +17,7 @@ export default function robots() {
           "/return-policy",
           "/cancellation",
           "/refund",
+          "/faq",
         ],
         disallow: [
           "/admin",

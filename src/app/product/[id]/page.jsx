@@ -140,7 +140,7 @@ export default async function ProductPage({ params }) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: safeJsonLdString }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdString, }}
       />
       <ProductClient initialProduct={product} />
     </>

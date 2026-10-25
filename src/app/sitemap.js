@@ -67,6 +67,12 @@ export default async function sitemap() {
       changeFrequency: "yearly",
       priority: 0.4,
     },
+    {
+      url: `${baseUrl}/faq`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
   ];
 
   // Fetch product items from backend API
