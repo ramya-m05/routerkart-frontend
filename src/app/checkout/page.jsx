@@ -312,6 +312,8 @@ export default function Checkout() {
           address: "RouterKart Order",
         },
 
+        image: "https://routerkart.in/favicon.png",
+
         theme: {
           color: "#FEE12B",
         },
