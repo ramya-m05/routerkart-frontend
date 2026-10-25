@@ -77,7 +77,7 @@ function PrivacyPolicy() {
         <Section title="Sharing Your Information">
           <p>RouterKart does <strong>not sell</strong> your personal data to third parties. We may share your information only in the following circumstances:</p>
           <SubHeading>Payment Processing</SubHeading>
-          <p>Your name, email, phone, and order amount are shared with Razorpay (our payment gateway) solely for the purpose of processing your payment. Razorpay's privacy practices are governed by their own policy.</p>
+          <p>Your name, email, phone, and order amount are shared with Razorpay (our payment gateway) solely for the purpose of processing your payment. Razorpay&apos;s privacy practices are governed by their own policy.</p>
           <SubHeading>Shipping & Delivery</SubHeading>
           <p>Your name, phone number, and delivery address are shared with our courier partners to fulfil your order.</p>
           <SubHeading>Legal Requirements</SubHeading>

@@ -32,19 +32,6 @@ function StoreContent() {
     process.env.NEXT_PUBLIC_API_URL ||
     "https://routerhub-backend.onrender.com/api";
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  useEffect(() => {
-    const categoryParam = searchParams.get("category");
-    if (categoryParam) {
-      setSelectedCategory(categoryParam);
-    } else {
-      setSelectedCategory("All");
-    }
-  }, [searchParams]);
-
   const fetchProducts = async () => {
     try {
       const res = await API.get("/products");
@@ -55,6 +42,21 @@ function StoreContent() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching on mount; setState in async API callback
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    const categoryParam = searchParams.get("category");
+    if (categoryParam) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing UI state from URL search params (external input)
+      setSelectedCategory(categoryParam);
+    } else {
+      setSelectedCategory("All");
+    }
+  }, [searchParams]);
 
   const filtered = products
     .filter(

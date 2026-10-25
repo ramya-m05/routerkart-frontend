@@ -537,23 +537,12 @@ export default function Profile() {
   const [otp, setOtp] = useState("");
   const [otpTimer, setOtpTimer] = useState(0);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
+  const handleLogout = () => {
+    if (typeof window !== "undefined") {
+      localStorage.clear();
     }
-    const localuser = JSON.parse(localStorage.getItem("user") || "{}");
-    setIsAdmin(localuser?.role === "admin" || localuser?.isAdmin === true);
-    fetchAll();
-  }, []);
-
-  useEffect(() => {
-    if (otpTimer <= 0) return;
-    const t = setInterval(() => setOtpTimer((v) => v - 1), 1000);
-    return () => clearInterval(t);
-  }, [otpTimer]);
+    router.push("/login");
+  };
 
   const fetchAll = async () => {
     try {
@@ -574,6 +563,26 @@ export default function Profile() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    const localuser = JSON.parse(localStorage.getItem("user") || "{}");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating from localStorage (external store) on mount, required for SSR
+    setIsAdmin(localuser?.role === "admin" || localuser?.isAdmin === true);
+    fetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only effect: fetchAll and router are stable
+  }, []);
+
+  useEffect(() => {
+    if (otpTimer <= 0) return;
+    const t = setInterval(() => setOtpTimer((v) => v - 1), 1000);
+    return () => clearInterval(t);
+  }, [otpTimer]);
 
   const handleSave = async () => {
     if (!editName.trim()) {
@@ -666,13 +675,6 @@ export default function Profile() {
   const handleSetDefault = async (id) => {
     const res = await API.patch(`/users/addresses/${id}/default`);
     setAddresses(res.data);
-  };
-
-  const handleLogout = () => {
-    if (typeof window !== "undefined") {
-      localStorage.clear();
-    }
-    router.push("/login");
   };
 
   const initials = (name) =>
@@ -1452,7 +1454,7 @@ export default function Profile() {
                 margin: "0 0 12px",
               }}
             >
-              You'll need to sign in again to access your account.
+              You&apos;ll need to sign in again to access your account.
             </p>
             <button
               onClick={handleLogout}

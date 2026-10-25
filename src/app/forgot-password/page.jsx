@@ -279,7 +279,7 @@ export default function ForgotPassword() {
                 margin: "0 0 28px",
               }}
             >
-              No worries! Enter your registered email and we'll send you a
+              No worries! Enter your registered email and we&apos;ll send you a
               one-time password to verify your identity.
             </p>
             <div
@@ -848,7 +848,7 @@ export default function ForgotPassword() {
                       margin: "5px 0 0",
                     }}
                   >
-                    Passwords don't match
+                    Passwords don&apos;t match
                   </p>
                 )}
                 {confirmP &&

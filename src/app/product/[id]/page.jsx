@@ -55,6 +55,7 @@ function Lightbox({ images, startIdx, onClose }) {
   const [scale, setScale] = useState(1);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const isDragging = useRef(false);
+  const [isDraggingState, setIsDraggingState] = useState(false);
   const dragOrigin = useRef({ x: 0, y: 0 });
 
   const go = (n) => {
@@ -88,6 +89,7 @@ function Lightbox({ images, startIdx, onClose }) {
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handlers use idx via closure; adding next/prev/onClose would require useCallback
   }, [idx]);
 
   // Lock scroll
@@ -101,6 +103,7 @@ function Lightbox({ images, startIdx, onClose }) {
   const handleMouseDown = (e) => {
     if (scale <= 1) return;
     isDragging.current = true;
+    setIsDraggingState(true);
     dragOrigin.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
   };
   const handleMouseMove = (e) => {
@@ -112,6 +115,7 @@ function Lightbox({ images, startIdx, onClose }) {
   };
   const handleMouseUp = () => {
     isDragging.current = false;
+    setIsDraggingState(false);
   };
 
   // Touch support
@@ -292,7 +296,7 @@ function Lightbox({ images, startIdx, onClose }) {
             maxHeight: "80vh",
             objectFit: "contain",
             transform: `scale(${scale}) translate(${pos.x / scale}px, ${pos.y / scale}px)`,
-            transition: isDragging.current ? "none" : "transform 0.2s",
+            transition: isDraggingState ? "none" : "transform 0.2s",
             cursor: scale > 1 ? "grab" : "zoom-in",
             userSelect: "none",
             WebkitUserSelect: "none",
@@ -467,6 +471,7 @@ export default function ProductDetails() {
   /* ── fetch ── */
   useEffect(() => {
     if (!id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- guard clause: returning early when product id is missing
       setLoading(false);
       setNotFound(true);
       return;
@@ -545,6 +550,7 @@ export default function ProductDetails() {
     if (typeof window === "undefined") return;
     const token = localStorage.getItem("token");
     if (!token || !id) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- setting loading flag before async fetch
     setCheckingBought(true);
     API.get("/orders")
       .then((res) => {
@@ -2105,7 +2111,7 @@ export default function ProductDetails() {
                     margin: 0,
                   }}
                 >
-                  ✅ You've already reviewed this product. Thank you!
+                  ✅ You&apos;ve already reviewed this product. Thank you!
                 </p>
               </div>
             ) : (

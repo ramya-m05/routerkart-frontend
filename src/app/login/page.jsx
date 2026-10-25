@@ -207,7 +207,7 @@ export default function Login() {
                 margin: "0 0 32px",
               }}
             >
-              India's #1 store for networking equipment — routers, fiber tools,
+              India&apos;s #1 store for networking equipment — routers, fiber tools,
               security systems and more.
             </p>
             {[

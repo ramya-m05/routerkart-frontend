@@ -18,6 +18,7 @@ function ProtectedRoute({ children }) {
       }
       router.replace("/login");
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- auth gate: must set state in effect for SSR hydration
       setAuthorized(true);
     }
   }, [router]);

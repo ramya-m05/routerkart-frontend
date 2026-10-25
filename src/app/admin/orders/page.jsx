@@ -47,6 +47,7 @@ export default function AdminOrders() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching on mount; setState is called asynchronously in API callback
     fetchOrders();
   }, []);
 

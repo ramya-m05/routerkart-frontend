@@ -27,6 +27,7 @@ const saveCats = (arr) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
   }
 };
+const Req = () => <span style={{ color: "#e53e3e" }}>*</span>;
 const CAT_COLORS = [
   "#FEE12B",
   "#bfdbfe",
@@ -91,6 +92,7 @@ export default function AdminDashboard() {
   /* ── auth check ── */
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating categories from localStorage (external store) on mount
     setCategories(loadCats());
     if (!localStorage.getItem("token")) router.push("/login");
   }, [router]);
@@ -141,6 +143,7 @@ export default function AdminDashboard() {
     }
   };
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching on mount; setState in async API callback
     fetchProducts();
   }, []);
 
@@ -159,7 +162,9 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching on toggle; setState in async API callback
     if (showCustomers && customers.length === 0) fetchCustomers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- customers.length guard is intentional (only fetch once)
   }, [showCustomers]);
 
   /* ── CATEGORY MANAGEMENT ── */
@@ -513,7 +518,7 @@ export default function AdminDashboard() {
   };
   const fo = (e) => (e.target.style.borderColor = "#FEE12B");
   const bl = (e) => (e.target.style.borderColor = "#e5e5e5");
-  const Req = () => <span style={{ color: "#e53e3e" }}>*</span>;
+  // Req component is defined at module scope (above) to avoid re-creation during render
 
   return (
     <div
@@ -2864,7 +2869,7 @@ export default function AdminDashboard() {
                 margin: "0 0 6px",
               }}
             >
-              "<strong>{categories[deleteCatIdx]}</strong>"
+              &quot;<strong>{categories[deleteCatIdx]}</strong>&quot;
             </p>
             <p
               style={{

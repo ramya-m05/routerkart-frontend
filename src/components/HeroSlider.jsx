@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useIsMobile } from "../hooks/useIsMobile";
 
@@ -46,17 +46,17 @@ function HeroSlider() {
   const [index, setIndex] = useState(0);
   const [animating, setAnimating] = useState(false);
 
-  const goTo = (i) => {
+  const goTo = useCallback((i) => {
     if (animating || i === index) return;
     setAnimating(true);
     setIndex(i);
     setTimeout(() => setAnimating(false), 300);
-  };
+  }, [animating, index]);
 
   useEffect(() => {
     const t = setInterval(() => goTo((index + 1) % slides.length), 4500);
     return () => clearInterval(t);
-  }, [index]);
+  }, [index, goTo]);
 
   const s = slides[index];
 

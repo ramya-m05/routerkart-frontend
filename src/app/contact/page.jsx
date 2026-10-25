@@ -189,7 +189,7 @@ export default function Contact() {
         </button>
         <h1 style={styles.heroH1}>Contact Us</h1>
         <p style={styles.heroSub}>
-          Questions, orders, or just want to say hi — we're here.
+          Questions, orders, or just want to say hi — we&apos;re here.
         </p>
       </div>
 

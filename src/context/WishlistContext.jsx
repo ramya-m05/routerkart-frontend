@@ -13,6 +13,7 @@ export const WishlistProvider = ({ children }) => {
     try {
       const stored = localStorage.getItem("wishlist");
       if (stored) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating from localStorage (external store); required for SSR compatibility
         setWishlist(JSON.parse(stored));
       }
     } catch (e) {

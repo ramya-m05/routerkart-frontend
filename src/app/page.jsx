@@ -13,10 +13,6 @@ function Home() {
   const [products, setProducts] = useState([]);
   const isMobile = useIsMobile();
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
   const fetchProducts = async () => {
     try {
       const res = await API.get("/products");
@@ -25,6 +21,11 @@ function Home() {
       console.log(err);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching on mount; setState in async API callback
+    fetchProducts();
+  }, []);
 
   return (
     <div style={{ background: "#fff", fontFamily: "'DM Sans', sans-serif" }}>
@@ -224,7 +225,7 @@ function Home() {
                   lineHeight: 1.6,
                 }}
               >
-                India's trusted source for networking gear — routers, fiber
+                India&apos;s trusted source for networking gear — routers, fiber
                 tools, security systems and more.
               </p>
               <a

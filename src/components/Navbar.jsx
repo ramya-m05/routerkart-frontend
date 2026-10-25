@@ -31,6 +31,7 @@ function Navbar({ products = [] }) {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing auth state from localStorage on navigation; required for SSR
       setToken(localStorage.getItem("token"));
       setRole(localStorage.getItem("role"));
       setUserName(localStorage.getItem("userName") || "");
@@ -51,6 +52,7 @@ function Navbar({ products = [] }) {
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating from localStorage on mount; required for SSR
         setRecent(JSON.parse(localStorage.getItem("recentSearch")) || []);
       } catch {
         setRecent([]);
@@ -69,6 +71,7 @@ function Navbar({ products = [] }) {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting mobile UI on route change is an intentional side-effect
     setShowMobileMenu(false);
     setShowMobileSearch(false);
   }, [pathname]);
@@ -574,7 +577,7 @@ function SearchDrop({ suggestions, recent, search, setSearch, onSelect }) {
             textAlign: "center",
           }}
         >
-          No results for "{search}"
+          No results for &quot;{search}&quot;
         </p>
       )}
     </div>

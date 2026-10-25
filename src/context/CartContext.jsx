@@ -13,6 +13,7 @@ export const CartProvider = ({ children }) => {
     try {
       const stored = localStorage.getItem("cart");
       if (stored) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating from localStorage (external store); required for SSR compatibility
         setCart(JSON.parse(stored));
       }
     } catch (e) {

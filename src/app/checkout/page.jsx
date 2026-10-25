@@ -72,6 +72,7 @@ export default function Checkout() {
       router.replace("/login?returnTo=%2Fcheckout");
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- auth gate: must set state in effect for SSR hydration
     setAuthChecked(true);
   }, [router]);
 
@@ -125,6 +126,7 @@ export default function Checkout() {
     if (cart && cart.length > 0) {
       syncCartProducts();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only effect: re-syncing on every cart change would cause infinite loop
   }, []);
 
   const subtotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
@@ -158,6 +160,7 @@ export default function Checkout() {
     const defaultAddress =
       addresses.find((a) => a.isDefault) || addresses[0];
     if (!defaultAddress) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- populating form fields from fetched address data (external API response)
     setDoorNo(defaultAddress.doorNo || "");
     setHouseName(defaultAddress.houseName || "");
     setCross(defaultAddress.cross || "");

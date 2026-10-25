@@ -130,10 +130,6 @@ export default function Orders() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
   const fetchOrders = async () => {
     try {
       const res = await API.get("/orders");
@@ -144,6 +140,11 @@ export default function Orders() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching on mount; setState in async API callback
+    fetchOrders();
+  }, []);
 
   const shortId = (id) => id?.slice(-8).toUpperCase() || "—";
   const formatDate = (d) =>

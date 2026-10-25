@@ -208,7 +208,7 @@ export default function Signup() {
                 margin: "0 0 28px",
               }}
             >
-              India's trusted store for routers, fiber tools & networking
+              India&apos;s trusted store for routers, fiber tools &amp; networking
               equipment.
             </p>
             {[
@@ -541,7 +541,7 @@ export default function Signup() {
                   margin: "5px 0 0",
                 }}
               >
-                Passwords don't match
+                Passwords don&apos;t match
               </p>
             )}
             {confirmPass &&

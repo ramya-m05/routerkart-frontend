@@ -106,7 +106,7 @@ export default function Support() {
             Support Center
           </h1>
           <p style={{ color: "#666", fontSize: "14px", margin: 0 }}>
-            We're here to help — find answers or reach out to us directly
+            We&apos;re here to help — find answers or reach out to us directly
           </p>
         </div>
       </div>
@@ -249,7 +249,7 @@ export default function Support() {
           Frequently Asked Questions
         </h2>
         <p style={{ fontSize: "14px", color: "#aaa", margin: "0 0 18px" }}>
-          Can't find your answer? Contact us on WhatsApp or email.
+          Can&apos;t find your answer? Contact us on WhatsApp or email.
         </p>
 
         {/* FAQ SEARCH */}
@@ -321,7 +321,7 @@ export default function Support() {
                 margin: "0 0 4px",
               }}
             >
-              No results found for "{search}"
+              No results found for &quot;{search}&quot;
             </p>
             <p style={{ color: "#aaa", fontSize: "13px", margin: 0 }}>
               Try a different keyword or contact us on WhatsApp.

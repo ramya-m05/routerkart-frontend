@@ -41,7 +41,7 @@ function TermsAndConditions() {
           <PolicyHeader label="Section 1" title="Terms & Conditions" emoji="🧾" />
 
           <Section title="Acceptance of Terms">
-            <p>By accessing and using routerkart.in ("Website"), you accept and agree to be bound by these Terms and Conditions and our Privacy Policy. If you do not agree to these terms, please do not use our website.</p>
+            <p>By accessing and using routerkart.in (&quot;Website&quot;), you accept and agree to be bound by these Terms and Conditions and our Privacy Policy. If you do not agree to these terms, please do not use our website.</p>
             <p>RouterKart reserves the right to modify these terms at any time. Continued use of the website after any changes constitutes your acceptance of the new terms.</p>
           </Section>
 
@@ -170,7 +170,7 @@ function TermsAndConditions() {
           </Section>
 
           <Section title="Refund for Cancelled Orders">
-            <p>Refunds for cancelled orders are processed to the original payment method. Bank transfer refunds may take an additional 2–3 business days depending on your bank's processing time.</p>
+            <p>Refunds for cancelled orders are processed to the original payment method. Bank transfer refunds may take an additional 2–3 business days depending on your bank&apos;s processing time.</p>
           </Section>
         </div>
 
@@ -198,7 +198,7 @@ function TermsAndConditions() {
           </Section>
 
           <Section title="Tracking Your Order">
-            <p>Once your order is dispatched, you will receive a tracking number via email. You can use this to track your shipment on the courier's website or through your <Link href="/orders" style={{ color: "#111", fontWeight: "700" }}>My Orders</Link> page on RouterKart.</p>
+            <p>Once your order is dispatched, you will receive a tracking number via email. You can use this to track your shipment on the courier&apos;s website or through your <Link href="/orders" style={{ color: "#111", fontWeight: "700" }}>My Orders</Link> page on RouterKart.</p>
           </Section>
 
           <Section title="Delivery Failures">

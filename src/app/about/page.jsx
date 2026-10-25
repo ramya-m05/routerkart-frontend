@@ -20,7 +20,7 @@ function About() {
       <div style={{ maxWidth: "860px", margin: "0 auto", padding: isMobile ? "28px 20px 60px" : "48px 40px 80px" }}>
         {/* WHO WE ARE */}
         <Section title="Who We Are">
-          <p>RouterKart is India's trusted online store for networking equipment — routers, fiber cables, fiber tools, security systems, and streaming devices. Based in Bangalore, we started with a single mission: make reliable networking gear accessible to every home, office, and ISP technician across the country.</p>
+          <p>RouterKart is India&apos;s trusted online store for networking equipment — routers, fiber cables, fiber tools, security systems, and streaming devices. Based in Bangalore, we started with a single mission: make reliable networking gear accessible to every home, office, and ISP technician across the country.</p>
           <p>We work directly with major manufacturers to ensure that every product we ship is 100% genuine and comes with the full brand warranty.</p>
         </Section>
 
@@ -73,7 +73,7 @@ function About() {
 
         {/* CONTACT */}
         <Section title="Get in Touch">
-          <p>Have questions, bulk order enquiries, or partnership proposals? We'd love to hear from you.</p>
+          <p>Have questions, bulk order enquiries, or partnership proposals? We&apos;d love to hear from you.</p>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "12px", marginTop: "8px" }}>
             {[
               { label: "Email", value: "admin@routerkart.in" },
