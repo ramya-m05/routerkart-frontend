@@ -4,6 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { useIsMobile } from "../hooks/useIsMobile";
 
+function getProductCondition(product) {
+  const rawCondition = product?.condition?.trim().toLowerCase();
+  if (rawCondition === "new") return "new";
+  if (rawCondition === "refurbished") return "refurbished";
+  if (product?.name?.toLowerCase().includes("refurbished")) return "refurbished";
+  return null;
+}
+
 export default function ProductFaq({ product }) {
   const isMobile = useIsMobile();
   const [openIdx, setOpenIdx] = useState(null);
@@ -12,19 +20,21 @@ export default function ProductFaq({ product }) {
 
   const productName = product.name || "Product";
   const category = product.category || "item";
-  const isNew = product.condition?.toLowerCase() === "new";
   const inStock = (product.stock ?? 0) > 0;
   const deliveryDays = product.deliveryDays || 5;
 
   // Build factual, verified questions
   const faqs = [];
 
+  const condition = getProductCondition(product);
+
   // 1. Condition
   faqs.push({
     q: `Is this ${productName} brand new or refurbished?`,
-    a: isNew
-      ? `This ${productName} is in brand-new, unused condition in its original manufacturer packaging.`
-      : `This ${productName} is certified refurbished. Every refurbished device is professionally tested, cleaned, and verified for full functionality by RouterKart technicians before dispatch.`,
+    a:
+      condition === "refurbished"
+        ? `This ${productName} is listed as refurbished. Please refer to the product specifications and condition notes above for specific details.`
+        : `Please refer to the product listing and specifications above for details regarding the condition of this unit. For any specific condition questions before ordering, please contact our support team.`,
   });
 
   // 2. Compatibility & Network
@@ -42,9 +52,7 @@ export default function ProductFaq({ product }) {
   // 4. Warranty & Authenticity
   faqs.push({
     q: `What warranty coverage applies to this ${category}?`,
-    a: isNew
-      ? `RouterKart supplies 100% genuine products. For brand-new equipment, manufacturer warranty applies as provided by the brand. Please check the product description for specific warranty details, or reach out to support.`
-      : `All refurbished units undergo rigorous multi-point testing to ensure full performance. Please consult the product listing details above or contact admin@routerkart.in for specific warranty or testing coverage applicable to this unit.`,
+    a: `Warranty coverage may vary by product. Please check the individual product description above for any applicable warranty details or contact our support team at admin@routerkart.in before placing your order.`,
   });
 
   // 5. Stock & Delivery
@@ -88,11 +96,12 @@ export default function ProductFaq({ product }) {
   // 7. Payment & COD
   faqs.push({
     q: "Is Cash on Delivery (COD) available for this product?",
-    a: product.advancePayment
-      ? `Yes, Cash on Delivery is available with a required advance of ₹${
-          product.advanceAmount || 150
-        } paid online at checkout to confirm the order, with the remaining balance collected upon delivery.`
-      : "Yes, Cash on Delivery is available for most locations across India with a ₹150 advance paid at checkout to confirm the order, with the remaining balance payable upon delivery.",
+    a:
+      product.advancePayment && Number(product.advanceAmount) > 0
+        ? `Cash on Delivery may be available depending on your delivery location and order eligibility. When available, this item requires an advance payment of ₹${Number(
+            product.advanceAmount
+          ).toLocaleString()} online at checkout to confirm the order, with the remaining balance collected upon delivery.`
+        : "Cash on Delivery may be available depending on your order and delivery details. No advance payment is required for this item when no advance is configured; any applicable payment requirements for the order will be shown at checkout.",
   });
 
   return (

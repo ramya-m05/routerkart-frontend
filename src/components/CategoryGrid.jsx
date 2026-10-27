@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useIsMobile } from "../hooks/useIsMobile";
 
 const CATEGORIES = [
@@ -12,7 +12,6 @@ const CATEGORIES = [
 ];
 
 function CategoryGrid() {
-  const router = useRouter();
   const isMobile = useIsMobile();
 
   return (
@@ -27,9 +26,9 @@ function CategoryGrid() {
       }}
     >
       {CATEGORIES.map((cat) => (
-        <div
+        <Link
           key={cat.name}
-          onClick={() => router.push(`/store?category=${encodeURIComponent(cat.name)}`)}
+          href={`/store?category=${encodeURIComponent(cat.name)}`}
           style={{
             display: "flex",
             alignItems: "center",
@@ -41,6 +40,8 @@ function CategoryGrid() {
             cursor: "pointer",
             transition: "all 0.2s",
             boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+            textDecoration: "none",
+            color: "inherit",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "translateY(-3px)";
@@ -80,7 +81,7 @@ function CategoryGrid() {
               {cat.desc}
             </p>
           </div>
-        </div>
+        </Link>
       ))}
     </div>
   );

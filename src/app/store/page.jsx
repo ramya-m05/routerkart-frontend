@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useContext, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import API from "../../services/api";
 import Navbar from "../../components/Navbar";
 import { CartContext } from "../../context/CartContext";
@@ -276,30 +277,37 @@ function StoreContent() {
                       background: "#f5f5f0",
                     }}
                   >
-                    <img
-                      src={
-                        Array.isArray(p.images) &&
-                        p.images.length > 0 &&
-                        p.images[0] &&
-                        p.images[0].trim() !== ""
-                          ? p.images[0].startsWith("http")
-                            ? p.images[0]
-                            : `${API_URL}/${p.images[0]}`
-                          : "/placeholder.png"
-                      }
-                      alt={p.name}
-                      style={{
-                        width: "100%",
-                        height: isMobile ? "140px" : "220px",
-                        objectFit: "contain",
-                        borderRadius: "6px",
-                        display: "block",
-                        background: "#fff",
-                      }}
-                      onError={(e) => {
-                        e.target.src = "/placeholder.png";
-                      }}
-                    />
+                    <Link
+                      href={`/product/${p._id}`}
+                      tabIndex={-1}
+                      aria-label={p.name}
+                      style={{ display: "block", textDecoration: "none" }}
+                    >
+                      <img
+                        src={
+                          Array.isArray(p.images) &&
+                          p.images.length > 0 &&
+                          p.images[0] &&
+                          p.images[0].trim() !== ""
+                            ? p.images[0].startsWith("http")
+                              ? p.images[0]
+                              : `${API_URL}/${p.images[0]}`
+                            : "/placeholder.png"
+                        }
+                        alt={p.name}
+                        style={{
+                          width: "100%",
+                          height: isMobile ? "140px" : "220px",
+                          objectFit: "contain",
+                          borderRadius: "6px",
+                          display: "block",
+                          background: "#fff",
+                        }}
+                        onError={(e) => {
+                          e.target.src = "/placeholder.png";
+                        }}
+                      />
+                    </Link>
                     {p.stock <= 3 && (
                       <span
                         style={{
@@ -370,7 +378,13 @@ function StoreContent() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {p.name}
+                      <Link
+                        href={`/product/${p._id}`}
+                        style={{ textDecoration: "none", color: "inherit" }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {p.name}
+                      </Link>
                     </h4>
 
                     {/* PRICE */}

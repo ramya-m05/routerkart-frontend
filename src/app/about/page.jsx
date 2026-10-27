@@ -21,7 +21,7 @@ function About() {
         {/* WHO WE ARE */}
         <Section title="Who We Are">
           <p>RouterKart is India&apos;s trusted online store for networking equipment — routers, fiber cables, fiber tools, security systems, and streaming devices. Based in Bangalore, we started with a single mission: make reliable networking gear accessible to every home, office, and ISP technician across the country.</p>
-          <p>We work directly with major manufacturers to ensure that every product we ship is 100% genuine and comes with the full brand warranty.</p>
+          <p>We specialize in refurbished networking gear, providing dependable equipment with honest descriptions and dedicated customer assistance.</p>
         </Section>
 
         {/* MISSION */}
