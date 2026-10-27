@@ -2,6 +2,7 @@
 
 import { useRef, useContext } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { CartContext } from "../context/CartContext";
 import { WishlistContext } from "../context/WishlistContext";
 
@@ -69,21 +70,28 @@ function ProductCarousel({ title, products }) {
               >
                 {/* IMAGE */}
                 <div style={styles.imgWrap}>
-                  {thumb ? (
-                    <img src={thumb} alt={p.name} style={styles.img} />
-                  ) : (
-                    <div
-                      style={{
-                        ...styles.img,
-                        background: "#f0f0f0",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <span style={{ fontSize: "32px" }}>📦</span>
-                    </div>
-                  )}
+                  <Link
+                    href={`/product/${p._id}`}
+                    tabIndex={-1}
+                    aria-label={p.name}
+                    style={{ display: "block", textDecoration: "none" }}
+                  >
+                    {thumb ? (
+                      <img src={thumb} alt={p.name} style={styles.img} />
+                    ) : (
+                      <div
+                        style={{
+                          ...styles.img,
+                          background: "#f0f0f0",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <span style={{ fontSize: "32px" }}>📦</span>
+                      </div>
+                    )}
+                  </Link>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -98,7 +106,15 @@ function ProductCarousel({ title, products }) {
                 {/* INFO */}
                 <div style={styles.info}>
                   <p style={styles.cat}>{p.category}</p>
-                  <h4 style={styles.name}>{p.name}</h4>
+                  <h4 style={styles.name}>
+                    <Link
+                      href={`/product/${p._id}`}
+                      style={{ textDecoration: "none", color: "inherit" }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {p.name}
+                    </Link>
+                  </h4>
 
                   {/* PRICE with strikethrough */}
                   <div

@@ -29,6 +29,14 @@ async function getProduct(id) {
   }
 }
 
+function getProductCondition(product) {
+  const rawCondition = product?.condition?.trim().toLowerCase();
+  if (rawCondition === "new") return "new";
+  if (rawCondition === "refurbished") return "refurbished";
+  if (product?.name?.toLowerCase().includes("refurbished")) return "refurbished";
+  return null;
+}
+
 export async function generateMetadata({ params }) {
   const resolvedParams = await params;
   const id = resolvedParams?.id;
@@ -45,13 +53,17 @@ export async function generateMetadata({ params }) {
     };
   }
 
+  const condition = getProductCondition(product);
+
   const cleanDesc = product.description
     ? product.description
         .replace(/<[^>]*>?/gm, "")
         .replace(/[\r\n]+/gm, " ")
         .slice(0, 160)
         .trim()
-    : `Buy ${product.name} at RouterKart. Genuine networking hardware with fast pan-India shipping.`;
+    : condition === "refurbished"
+    ? `Buy refurbished ${product.name} at RouterKart. Quality refurbished networking equipment with pan-India delivery.`
+    : `Buy ${product.name} at RouterKart. Networking hardware and accessories with pan-India delivery.`;
 
   const primaryImage =
     (Array.isArray(product.images) && product.images[0]) ||
@@ -95,6 +107,14 @@ export default async function ProductPage({ params }) {
     notFound();
   }
 
+  const condition = getProductCondition(product);
+  let itemCondition;
+  if (condition === "new") {
+    itemCondition = "https://schema.org/NewCondition";
+  } else if (condition === "refurbished") {
+    itemCondition = "https://schema.org/RefurbishedCondition";
+  }
+
   // Schema.org structured data
   const jsonLd = {
     "@context": "https://schema.org",
@@ -116,10 +136,7 @@ export default async function ProductPage({ params }) {
       url: `https://routerkart.in/product/${product._id}`,
       priceCurrency: "INR",
       price: product.price,
-      itemCondition:
-        product.condition?.toLowerCase() === "new"
-          ? "https://schema.org/NewCondition"
-          : "https://schema.org/RefurbishedCondition",
+      ...(itemCondition ? { itemCondition } : {}),
       availability:
         product.stock > 0
           ? "https://schema.org/InStock"
