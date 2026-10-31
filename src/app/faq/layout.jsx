@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Frequently Asked Questions (FAQ) | RouterKart",
+  title: "Frequently Asked Questions (FAQ)",
   description:
     "Find answers to common questions about networking products, order tracking, payments, shipping, returns, warranty, and customer support on RouterKart.",
   alternates: {

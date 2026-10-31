@@ -59,25 +59,31 @@ export default function ProductFaq({ product }) {
   faqs.push({
     q: "When will this product be delivered, and is delivery free?",
     a: inStock
-      ? `This product is currently in stock. Orders are typically delivered within ${deliveryDays} working days across India, with dispatch tracking details sent via email. RouterKart offers FREE delivery on orders ₹499 and above.`
+      ? `This product is currently in stock. Orders are typically delivered within approximately 2–5 days across India, with dispatch tracking details sent via email. RouterKart offers FREE delivery on orders over ₹499.`
       : `This product is currently out of stock. Please check back later or contact customer support to inquire about availability and restocking dates.`,
   });
 
   // 6. Return & Replacement
   let returnAnswer = "";
   if (product.returnEligible) {
-    returnAnswer = `This product is eligible for return within ${
-      product.returnWindowDays || 7
-    } days of delivery${
+    const windowText =
+      Number.isInteger(product.returnWindowDays) &&
+      product.returnWindowDays > 0
+        ? `within ${product.returnWindowDays} days of delivery`
+        : "in accordance with its return policy";
+    returnAnswer = `This product is eligible for return ${windowText}${
       product.replacementEligible ? " and is also eligible for replacement" : ""
     }, provided it is in original condition with all packaging and accessories intact.`;
     if (product.policyNotes) {
       returnAnswer += ` ${product.policyNotes}`;
     }
   } else if (product.replacementEligible) {
-    returnAnswer = `This product is eligible for replacement within ${
-      product.returnWindowDays || 7
-    } days of delivery in case of verified transit damage or defect.`;
+    const windowText =
+      Number.isInteger(product.returnWindowDays) &&
+      product.returnWindowDays > 0
+        ? `within ${product.returnWindowDays} days of delivery`
+        : "in accordance with its replacement policy";
+    returnAnswer = `This product is eligible for replacement ${windowText} in case of verified transit damage or defect.`;
     if (product.policyNotes) {
       returnAnswer += ` ${product.policyNotes}`;
     }

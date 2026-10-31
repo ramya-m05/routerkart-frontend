@@ -1,12 +1,12 @@
 export const metadata = {
-  title: "Terms & Conditions | RouterKart",
+  title: "Terms & Conditions",
   description:
     "Review our user agreement, terms of service, payment policies, and order fulfillment conditions on RouterKart.",
   alternates: {
     canonical: "/terms",
   },
   openGraph: {
-    title: "Terms & Conditions | RouterKart",
+    title: "Terms & Conditions",
     description: "Official terms and conditions for purchasing from RouterKart.",
     url: "https://routerkart.in/terms",
   },

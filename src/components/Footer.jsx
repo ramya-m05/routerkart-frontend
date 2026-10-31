@@ -208,10 +208,10 @@ export default function Footer() {
           }}
         >
           {[
-            "🚚 Free delivery on ₹499+",
+            "🚚 Free delivery on orders over ₹499",
             "🔒 Secure Razorpay checkout",
             "✅ Genuine products",
-            "🔄 7-day returns",
+            "🔄 Easy returns on eligible items",
             "💬 WhatsApp support",
           ].map((t, i) => (
             <span

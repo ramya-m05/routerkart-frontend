@@ -421,7 +421,10 @@ function Lightbox({ images, startIdx, onClose }) {
 }
 
 /* ─── Main Component ──────────────────────── */
-export default function ProductDetails({ initialProduct = null }) {
+export default function ProductDetails({
+  initialProduct = null,
+  initialAllProducts = [],
+}) {
   const params = useParams();
   const id = params?.id;
   const router = useRouter();
@@ -432,7 +435,7 @@ export default function ProductDetails({ initialProduct = null }) {
     useContext(WishlistContext);
 
   const [product, setProduct] = useState(initialProduct);
-  const [allProducts, setAllProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState(initialAllProducts);
   const [loading, setLoading] = useState(!initialProduct);
   const [error, setError] = useState(null);
   const [notFound, setNotFound] = useState(false);
@@ -491,58 +494,59 @@ export default function ProductDetails({ initialProduct = null }) {
       setProduct(null);
       setActiveImg(0);
       setQty(1);
+
+      API.get(`/products/${id}`)
+        .then((res) => {
+          if (cancelled) return;
+
+          if (!res.data) {
+            setNotFound(true);
+            return;
+          }
+
+          setProduct(res.data);
+        })
+        .catch((err) => {
+          if (cancelled) return;
+
+          if (err.response?.status === 404) {
+            setNotFound(true);
+            setError("This product does not exist.");
+          } else {
+            setError(
+              `Failed to load product. (${err.response?.status || err.message})`
+            );
+          }
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setLoading(false);
+          }
+        });
     }
-    setAllProducts([]);
 
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    API.get(`/products/${id}`)
-      .then((res) => {
-        if (cancelled) return;
+    if (!initialAllProducts || initialAllProducts.length === 0) {
+      API.get("/products")
+        .then((res) => {
+          if (cancelled) return;
 
-        if (!res.data) {
-          setNotFound(true);
-          return;
-        }
-
-        setProduct(res.data);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-
-        if (err.response?.status === 404) {
-          setNotFound(true);
-          setError("This product does not exist.");
-        } else {
-          setError(
-            `Failed to load product. (${err.response?.status || err.message})`
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
-
-    API.get("/products")
-      .then((res) => {
-        if (cancelled) return;
-
-        setAllProducts(Array.isArray(res.data) ? res.data : []);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setAllProducts([]);
-        }
-      });
+          setAllProducts(Array.isArray(res.data) ? res.data : []);
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setAllProducts([]);
+          }
+        });
+    }
 
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, initialProduct, initialAllProducts]);
 
   /* ── reviews ── */
   useEffect(() => {
@@ -1405,11 +1409,10 @@ export default function ProductDetails({ initialProduct = null }) {
                   margin: "0 0 2px",
                 }}
               >
-                🚚 Free delivery by {getDeliveryDate(product.deliveryDays || 5)}
+                🚚 {product.price > 499 ? "Free delivery" : "Estimated delivery"} by {getDeliveryDate(product.deliveryDays || 5)}
               </p>
               <p style={{ fontSize: "12px", color: "#60a5fa", margin: 0 }}>
-                {product.deliveryDays || 5} working days · Order before 5 PM
-                today
+                {product.deliveryDays ? `approximately ${product.deliveryDays} days` : "approximately 2–5 days"} · {product.price > 499 ? "Free delivery on orders over ₹499" : "Free delivery available on orders over ₹499"}
               </p>
             </div>
 
@@ -1659,12 +1662,15 @@ export default function ProductDetails({ initialProduct = null }) {
             >
               {(() => {
                 const badges = [
-                  "🚚 Free Delivery",
+                  product.price > 499 ? "🚚 Free Delivery" : "🚚 Free Delivery on orders over ₹499",
                   "🔒 Secure Payment",
                 ];
                 if (product.returnEligible) {
-                  const days = product.returnWindowDays || 7;
-                  badges.push(`🔄 ${days}-Day Returns`);
+                  if (Number.isInteger(product.returnWindowDays) && product.returnWindowDays > 0) {
+                    badges.push(`🔄 ${product.returnWindowDays}-Day Returns`);
+                  } else {
+                    badges.push("🔄 Returns Available");
+                  }
                 }
                 if (product.replacementEligible) {
                   badges.push("🔁 Replacement Available");
@@ -1703,7 +1709,7 @@ export default function ProductDetails({ initialProduct = null }) {
             >
               {product.returnEligible && (
                 <p style={{ margin: "0 0 4px", color: "#15803d", fontWeight: "700" }}>
-                  🔄 {product.returnWindowDays || 7}-day return window
+                  🔄 {Number.isInteger(product.returnWindowDays) && product.returnWindowDays > 0 ? `${product.returnWindowDays}-day return window` : "Return eligible"}
                 </p>
               )}
               {product.replacementEligible && (

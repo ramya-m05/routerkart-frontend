@@ -5,6 +5,7 @@ import { useIsMobile } from "../hooks/useIsMobile";
 
 const CATEGORIES = [
   { name: "Router", icon: "📡", desc: "WiFi 6, mesh & more", bg: "#FFF9E6", border: "#FEE12B" },
+  { name: "GPON / ONT", icon: "⚡", desc: "FTTH optical routers", bg: "#F0FDFA", border: "#5EEAD4" },
   { name: "Fiber Cable", icon: "🔌", desc: "Single & multimode", bg: "#EFF6FF", border: "#93C5FD" },
   { name: "Fiber Tools", icon: "🔧", desc: "Splicers & testers", bg: "#F0FDF4", border: "#86EFAC" },
   { name: "Security", icon: "🔒", desc: "Cameras & NVRs", bg: "#FEF2F2", border: "#FCA5A5" },

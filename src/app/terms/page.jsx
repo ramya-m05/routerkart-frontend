@@ -183,7 +183,7 @@ function TermsAndConditions() {
           <Section title="Shipping Coverage & Timelines">
             <ul>
               <li>RouterKart ships across India through trusted courier partners.</li>
-              <li>Standard delivery takes <strong>3–7 working days</strong> depending on your location. Delivery estimates are shown on each product page.</li>
+              <li>Standard delivery takes <strong>approximately 2–5 days</strong> depending on your location. Delivery estimates are shown on each product page.</li>
               <li>Remote or rural areas may take additional time.</li>
               <li>Orders placed before 5:00 PM on a working day are typically dispatched the same day or the next morning.</li>
             </ul>

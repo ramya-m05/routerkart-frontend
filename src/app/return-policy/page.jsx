@@ -17,14 +17,15 @@ const ReturnPolicy = () => {
 
       <div style={{ maxWidth: "860px", margin: "0 auto", padding: isMobile ? "28px 20px 60px" : "48px 40px 80px" }}>
         <InfoBox>
-          We offer a 7-day hassle-free return policy on all products. Please read the conditions below to ensure a smooth return process.
+          Return and replacement eligibility varies by product category, condition (brand new vs. refurbished), and manufacturer warranty terms. Please verify the specific return eligibility and window indicated on each individual product page before placing an order.
         </InfoBox>
 
         <Section title="Eligibility for Returns">
           <ul style={{ paddingLeft: "20px" }}>
-            <li style={{ marginBottom: "8px" }}>Item must be unused and in original condition</li>
-            <li style={{ marginBottom: "8px" }}>Item must be returned with all accessories and original packaging</li>
-            <li>Return request must be raised within 7 days of delivery</li>
+            <li style={{ marginBottom: "8px" }}>Item must be eligible for return or replacement as stated on its product page</li>
+            <li style={{ marginBottom: "8px" }}>Item must be in its original delivered condition with serial number / MAC address intact</li>
+            <li style={{ marginBottom: "8px" }}>Item must be returned with all bundled cables, power adapters, and original packaging</li>
+            <li>Return or replacement request must be raised within the applicable window (typically 7 days for eligible items) from delivery</li>
           </ul>
         </Section>
 
