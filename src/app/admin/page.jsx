@@ -54,6 +54,10 @@ export default function AdminDashboard() {
   const [category, setCategory] = useState("");
   const [brand, setBrand] = useState("");
   const [sku, setSku] = useState("");
+  const [weight, setWeight] = useState("");
+  const [packageLength, setPackageLength] = useState("");
+  const [packageWidth, setPackageWidth] = useState("");
+  const [packageHeight, setPackageHeight] = useState("");
   const [deliveryDays, setDeliveryDays] = useState("5");
   const [advancePayment, setAdvancePayment] = useState(false);
   const [advanceAmount, setAdvanceAmount] = useState("");
@@ -296,6 +300,22 @@ export default function AdminDashboard() {
       toast.error("Enter valid delivery days (min 1)");
       return false;
     }
+    if (!weight || isNaN(weight) || +weight <= 0) {
+      toast.error("Product weight is compulsory (must be > 0 grams)");
+      return false;
+    }
+    if (!packageLength || isNaN(packageLength) || +packageLength <= 0) {
+      toast.error("Package length is compulsory (must be > 0 cm)");
+      return false;
+    }
+    if (!packageWidth || isNaN(packageWidth) || +packageWidth <= 0) {
+      toast.error("Package width is compulsory (must be > 0 cm)");
+      return false;
+    }
+    if (!packageHeight || isNaN(packageHeight) || +packageHeight <= 0) {
+      toast.error("Package height is compulsory (must be > 0 cm)");
+      return false;
+    }
     if (advancePayment) {
       if (!advanceAmount || isNaN(advanceAmount) || +advanceAmount <= 0) {
         toast.error("Enter a valid advance amount greater than ₹0");
@@ -330,6 +350,10 @@ export default function AdminDashboard() {
     if (originalPrice) fd.append("originalPrice", Number(originalPrice));
     if (brand) fd.append("brand", brand.trim());
     if (sku) fd.append("sku", sku.trim());
+    if (weight) fd.append("weight", Number(weight));
+    if (packageLength) fd.append("packageLength", Number(packageLength));
+    if (packageWidth) fd.append("packageWidth", Number(packageWidth));
+    if (packageHeight) fd.append("packageHeight", Number(packageHeight));
 
     // Return & Replacement Policy
     fd.append("returnEligible", returnEligible ? "true" : "false");
@@ -410,6 +434,10 @@ export default function AdminDashboard() {
     setCategory(p.category || "");
     setBrand(p.brand || "");
     setSku(p.sku || "");
+    setWeight(p.weight ? String(p.weight) : "");
+    setPackageLength(p.packageLength ? String(p.packageLength) : "");
+    setPackageWidth(p.packageWidth ? String(p.packageWidth) : "");
+    setPackageHeight(p.packageHeight ? String(p.packageHeight) : "");
     setDeliveryDays(p.deliveryDays || "5");
     setAdvancePayment(Boolean(p.advancePayment));
     setAdvanceAmount(p.advanceAmount ? String(p.advanceAmount) : "");
@@ -444,6 +472,10 @@ export default function AdminDashboard() {
     setCategory("");
     setBrand("");
     setSku("");
+    setWeight("");
+    setPackageLength("");
+    setPackageWidth("");
+    setPackageHeight("");
     setDeliveryDays("5");
     setAdvancePayment(false);
     setAdvanceAmount("");
@@ -1999,6 +2031,111 @@ export default function AdminDashboard() {
                     </p>
                   )}
                 </div>
+              </div>
+
+              {/* SHIPPING MEASUREMENTS */}
+              <div
+                style={{
+                  background: "#f0fdf4",
+                  border: "1.5px solid #86efac",
+                  borderRadius: "10px",
+                  padding: "16px 18px",
+                  marginBottom: "14px",
+                }}
+              >
+                <div style={{ marginBottom: "12px" }}>
+                  <label style={{ ...lbl, color: "#166534", marginBottom: "2px" }}>
+                    📦 SHIPPING MEASUREMENTS (COMPULSORY) <Req />
+                  </label>
+                  <p style={{ fontSize: "11px", color: "#15803d", margin: 0 }}>
+                    Mandatory product package weight and dimensions for courier delivery.
+                  </p>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
+                    gap: "10px",
+                  }}
+                >
+                  <div>
+                    <label style={lbl}>Weight (Grams) <Req /></label>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <input
+                        style={inp}
+                        placeholder="e.g. 450"
+                        type="number"
+                        min="1"
+                        value={weight}
+                        onChange={(e) => setWeight(e.target.value)}
+                        onFocus={fo}
+                        onBlur={bl}
+                      />
+                      <span style={{ fontSize: "11px", color: "#666", fontWeight: "700" }}>g</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={lbl}>Length (cm) <Req /></label>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <input
+                        style={inp}
+                        placeholder="e.g. 20"
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        value={packageLength}
+                        onChange={(e) => setPackageLength(e.target.value)}
+                        onFocus={fo}
+                        onBlur={bl}
+                      />
+                      <span style={{ fontSize: "11px", color: "#666", fontWeight: "700" }}>cm</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={lbl}>Width (cm) <Req /></label>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <input
+                        style={inp}
+                        placeholder="e.g. 15"
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        value={packageWidth}
+                        onChange={(e) => setPackageWidth(e.target.value)}
+                        onFocus={fo}
+                        onBlur={bl}
+                      />
+                      <span style={{ fontSize: "11px", color: "#666", fontWeight: "700" }}>cm</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={lbl}>Height (cm) <Req /></label>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <input
+                        style={inp}
+                        placeholder="e.g. 5"
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        value={packageHeight}
+                        onChange={(e) => setPackageHeight(e.target.value)}
+                        onFocus={fo}
+                        onBlur={bl}
+                      />
+                      <span style={{ fontSize: "11px", color: "#666", fontWeight: "700" }}>cm</span>
+                    </div>
+                  </div>
+                </div>
+
+                {packageLength && packageWidth && packageHeight && (
+                  <p style={{ fontSize: "11px", color: "#166534", margin: "8px 0 0", fontWeight: "600" }}>
+                    📐 Volumetric Weight: {(((+packageLength) * (+packageWidth) * (+packageHeight)) / 5000).toFixed(3)} kg ({Math.round((((+packageLength) * (+packageWidth) * (+packageHeight)) / 5000) * 1000)}g)
+                  </p>
+                )}
               </div>
 
               {/* ADVANCE PAYMENT TOGGLE & AMOUNT */}
