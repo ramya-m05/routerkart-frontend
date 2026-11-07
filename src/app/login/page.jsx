@@ -211,7 +211,7 @@ export default function Login() {
               security systems and more.
             </p>
             {[
-              "🚚 Free delivery on orders ₹499+",
+              "🚚 Shipping charges are displayed at checkout",
               "🔒 Secure & encrypted payments",
               "💯 Genuine brand-verified products",
             ].map((f, i) => (

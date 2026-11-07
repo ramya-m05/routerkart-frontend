@@ -484,19 +484,6 @@ export default function Cart() {
                     {delivery === 0 ? "FREE" : `₹${delivery}`}
                   </span>
                 </div>
-                {subtotal < 499 && (
-                  <p
-                    style={{
-                      fontSize: "11px",
-                      color: "#aaa",
-                      margin: "8px 0 0",
-                      fontWeight: "500",
-                    }}
-                  >
-                    Add ₹{(499 - subtotal).toLocaleString()} more for free
-                    delivery
-                  </p>
-                )}
                 <div
                   style={{
                     height: "1px",

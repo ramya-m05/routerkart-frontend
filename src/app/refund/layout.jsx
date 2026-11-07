@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Refund Policy | RouterKart",
+  title: "Refund Policy",
   description:
     "Information regarding refund processing timelines, methods, and verification on RouterKart.",
   alternates: {

@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Return & Replacement Policy | RouterKart",
+  title: "Return & Replacement Policy",
   description:
     "Understand RouterKart's return window, replacement eligibility, and refund terms on networking devices.",
   alternates: {

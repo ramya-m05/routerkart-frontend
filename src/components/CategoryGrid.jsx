@@ -1,10 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useIsMobile } from "../hooks/useIsMobile";
 
 const CATEGORIES = [
   { name: "Router", icon: "📡", desc: "WiFi 6, mesh & more", bg: "#FFF9E6", border: "#FEE12B" },
+  { name: "GPON / ONT", icon: "⚡", desc: "FTTH optical routers", bg: "#F0FDFA", border: "#5EEAD4" },
   { name: "Fiber Cable", icon: "🔌", desc: "Single & multimode", bg: "#EFF6FF", border: "#93C5FD" },
   { name: "Fiber Tools", icon: "🔧", desc: "Splicers & testers", bg: "#F0FDF4", border: "#86EFAC" },
   { name: "Security", icon: "🔒", desc: "Cameras & NVRs", bg: "#FEF2F2", border: "#FCA5A5" },
@@ -12,7 +13,6 @@ const CATEGORIES = [
 ];
 
 function CategoryGrid() {
-  const router = useRouter();
   const isMobile = useIsMobile();
 
   return (
@@ -27,9 +27,9 @@ function CategoryGrid() {
       }}
     >
       {CATEGORIES.map((cat) => (
-        <div
+        <Link
           key={cat.name}
-          onClick={() => router.push(`/store?category=${encodeURIComponent(cat.name)}`)}
+          href={`/store?category=${encodeURIComponent(cat.name)}`}
           style={{
             display: "flex",
             alignItems: "center",
@@ -41,6 +41,8 @@ function CategoryGrid() {
             cursor: "pointer",
             transition: "all 0.2s",
             boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+            textDecoration: "none",
+            color: "inherit",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "translateY(-3px)";
@@ -80,7 +82,7 @@ function CategoryGrid() {
               {cat.desc}
             </p>
           </div>
-        </div>
+        </Link>
       ))}
     </div>
   );

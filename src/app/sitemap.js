@@ -5,71 +5,60 @@ const API_BASE =
 export default async function sitemap() {
   const baseUrl = "https://routerkart.in";
 
-  // Core static pages
+  // Core static pages (lastModified omitted because static content has no verifiable database timestamp)
   const staticRoutes = [
     {
       url: baseUrl,
-      lastModified: new Date(),
       changeFrequency: "daily",
       priority: 1.0,
     },
     {
       url: `${baseUrl}/store`,
-      lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.9,
     },
     {
       url: `${baseUrl}/about`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.6,
     },
     {
       url: `${baseUrl}/contact`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.6,
     },
     {
       url: `${baseUrl}/support`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.6,
     },
     {
       url: `${baseUrl}/terms`,
-      lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.4,
     },
     {
       url: `${baseUrl}/privacy-policy`,
-      lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.4,
     },
     {
       url: `${baseUrl}/return-policy`,
-      lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.4,
     },
     {
       url: `${baseUrl}/cancellation`,
-      lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.4,
     },
     {
       url: `${baseUrl}/refund`,
-      lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.4,
     },
     {
       url: `${baseUrl}/faq`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.6,
     },
@@ -91,12 +80,19 @@ export default async function sitemap() {
       if (Array.isArray(products)) {
         productRoutes = products
           .filter((p) => p && p._id && typeof p._id === "string")
-          .map((p) => ({
-            url: `${baseUrl}/product/${p._id}`,
-            lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(),
-            changeFrequency: "weekly",
-            priority: 0.8,
-          }));
+          .map((p) => {
+            const entry = {
+              url: `${baseUrl}/product/${p._id}`,
+              changeFrequency: "weekly",
+              priority: 0.8,
+            };
+            if (p.updatedAt) {
+              entry.lastModified = new Date(p.updatedAt);
+            } else if (p.createdAt) {
+              entry.lastModified = new Date(p.createdAt);
+            }
+            return entry;
+          });
       }
     }
   } catch (err) {

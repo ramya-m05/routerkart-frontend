@@ -11,7 +11,7 @@ const FAQS = [
   },
   {
     q: "What payment methods do you accept?",
-    a: "We accept UPI, credit/debit cards, net banking, and Cash on Delivery (COD) via Razorpay. COD orders require a ₹150 advance at checkout.",
+    a: "We accept UPI, credit/debit cards, net banking, and Cash on Delivery (COD) for eligible orders via Razorpay. For COD orders, any required advance payment is displayed during checkout, with the remaining balance payable upon delivery.",
   },
   {
     q: "How long does delivery take?",
@@ -31,7 +31,7 @@ const FAQS = [
   },
   {
     q: "Do you offer warranty on products?",
-    a: "Yes, all products are genuine and come with manufacturer warranty. Warranty duration varies by product and brand — please check the product description page for details.",
+    a: "Warranty coverage varies by product. RouterKart specializes in refurbished networking equipment. Please check the individual product description page for applicable warranty details or contact support before ordering.",
   },
   {
     q: "I forgot my password. How do I reset it?",
@@ -47,7 +47,7 @@ const FAQS = [
   },
   {
     q: "Is Cash on Delivery (COD) available for all products?",
-    a: "COD is available for most products and locations. A ₹150 advance is collected online to confirm the order, with the remaining balance paid on delivery.",
+    a: "Cash on Delivery is available on eligible orders and locations. If an advance payment is required to confirm your order, the applicable advance amount will be displayed at checkout, and the remaining balance is paid on delivery.",
   },
   {
     q: "How do I write a product review?",

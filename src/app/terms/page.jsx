@@ -191,9 +191,9 @@ function TermsAndConditions() {
 
           <Section title="Shipping Charges">
             <ul>
-              <li>Free shipping on all orders above ₹499.</li>
-              <li>A flat delivery charge of ₹49 applies to orders below ₹499.</li>
-              <li>Shipping charges are non-refundable.</li>
+              <li>Shipping charges are displayed at checkout prior to order confirmation.</li>
+              <li>Any applicable delivery charges are clearly shown before you complete payment.</li>
+              <li>Shipping charges, once dispatched, are non-refundable, except where the return or refund is due to an error on our part.</li>
             </ul>
           </Section>
 

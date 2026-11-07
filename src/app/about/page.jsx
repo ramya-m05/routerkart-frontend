@@ -21,7 +21,7 @@ function About() {
         {/* WHO WE ARE */}
         <Section title="Who We Are">
           <p>RouterKart is India&apos;s trusted online store for networking equipment — routers, fiber cables, fiber tools, security systems, and streaming devices. Based in Bangalore, we started with a single mission: make reliable networking gear accessible to every home, office, and ISP technician across the country.</p>
-          <p>We work directly with major manufacturers to ensure that every product we ship is 100% genuine and comes with the full brand warranty.</p>
+          <p>We specialize in refurbished networking gear, providing dependable equipment with honest descriptions and dedicated customer assistance.</p>
         </Section>
 
         {/* MISSION */}
@@ -54,10 +54,10 @@ function About() {
         {/* WHY ROUTERKART */}
         <Section title="Why Choose RouterKart">
           {[
-            { icon: "✅", title: "100% Genuine Products", desc: "Every item is sourced from verified distributors. No counterfeits, ever." },
-            { icon: "🚚", title: "Fast Delivery", desc: "We ship across India with trusted courier partners. Most orders delivered within 5 working days." },
+            { icon: "✅", title: "100% Genuine Products", desc: "Every device is authentic hardware, thoroughly inspected and verified before dispatch." },
+            { icon: "🚚", title: "Fast Delivery", desc: "We ship across India with trusted courier partners. Most orders delivered within 3–7 working days." },
             { icon: "💰", title: "Honest Pricing", desc: "What you see is what you pay. No hidden charges." },
-            { icon: "🔄", title: "Easy Returns", desc: "7-day hassle-free return policy on all products." },
+            { icon: "🔄", title: "Easy Returns", desc: "Clear return and replacement terms on eligible products." },
             { icon: "🔒", title: "Secure Payments", desc: "All transactions are processed via Razorpay with bank-grade encryption." },
             { icon: "💬", title: "WhatsApp Support", desc: "Reach us anytime on WhatsApp for quick help with orders or products." },
           ].map((item, i) => (

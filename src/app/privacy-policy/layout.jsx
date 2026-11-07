@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Privacy Policy | RouterKart",
+  title: "Privacy Policy",
   description:
     "Learn how RouterKart collects, protects, and handles your personal information, payment details, and privacy.",
   alternates: {
