@@ -14,7 +14,7 @@ async function getProduct(id) {
       : `${API_BASE.replace(/\/$/, "")}/api/products/${id}`;
 
     const res = await fetch(endpoint, {
-      next: { revalidate: 3600 },
+      next: { revalidate: 60, tags: ["products", `product-${id}`] },
     });
 
     if (!res.ok) {
@@ -36,7 +36,7 @@ async function getProducts() {
       : `${API_BASE.replace(/\/$/, "")}/api/products`;
 
     const res = await fetch(endpoint, {
-      next: { revalidate: 3600 },
+      next: { revalidate: 60, tags: ["products"] },
     });
 
     if (!res.ok) return [];

@@ -77,13 +77,13 @@ const FAQ_DATA = [
   // ─── Shipping & Delivery ───
   {
     category: "shipping",
-    q: "Do you offer free shipping?",
-    a: "RouterKart offers free standard delivery across India on orders over ₹499. Orders below ₹499 may incur a delivery fee, which will be shown during checkout.",
+    q: "What are your shipping and delivery charges?",
+    a: "Shipping charges are displayed at checkout. Any applicable delivery charges are clearly shown before you complete payment.",
   },
   {
     category: "shipping",
     q: "How long does shipping and delivery take?",
-    a: "Standard delivery typically takes approximately 2 to 5 days across India, depending on your delivery pincode and location. Check your product page and dispatch confirmation for any available delivery estimates.",
+    a: "Standard delivery typically takes 3 to 7 working days across India, depending on your delivery pincode and location. Check your product page and dispatch confirmation for any available delivery estimates.",
   },
   {
     category: "shipping",

@@ -54,8 +54,8 @@ function About() {
         {/* WHY ROUTERKART */}
         <Section title="Why Choose RouterKart">
           {[
-            { icon: "✅", title: "100% Genuine Products", desc: "Every item is sourced from verified distributors. No counterfeits, ever." },
-            { icon: "🚚", title: "Fast Delivery", desc: "We ship across India with trusted courier partners. Most orders delivered in approximately 2–5 days." },
+            { icon: "✅", title: "100% Genuine Products", desc: "Every device is authentic hardware, thoroughly inspected and verified before dispatch." },
+            { icon: "🚚", title: "Fast Delivery", desc: "We ship across India with trusted courier partners. Most orders delivered within 3–7 working days." },
             { icon: "💰", title: "Honest Pricing", desc: "What you see is what you pay. No hidden charges." },
             { icon: "🔄", title: "Easy Returns", desc: "Clear return and replacement terms on eligible products." },
             { icon: "🔒", title: "Secure Payments", desc: "All transactions are processed via Razorpay with bank-grade encryption." },

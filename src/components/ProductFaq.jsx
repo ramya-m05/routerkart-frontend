@@ -21,7 +21,6 @@ export default function ProductFaq({ product }) {
   const productName = product.name || "Product";
   const category = product.category || "item";
   const inStock = (product.stock ?? 0) > 0;
-  const deliveryDays = product.deliveryDays || 5;
 
   // Build factual, verified questions
   const faqs = [];
@@ -57,9 +56,13 @@ export default function ProductFaq({ product }) {
 
   // 5. Stock & Delivery
   faqs.push({
-    q: "When will this product be delivered, and is delivery free?",
+    q: "When will this product be delivered?",
     a: inStock
-      ? `This product is currently in stock. Orders are typically delivered within approximately 2–5 days across India, with dispatch tracking details sent via email. RouterKart offers FREE delivery on orders over ₹499.`
+      ? `This product is currently in stock. Orders are typically delivered within ${
+          product.deliveryDays
+            ? `approximately ${product.deliveryDays} working days`
+            : "approximately 3–7 working days"
+        } across India, with dispatch tracking details sent via email. Shipping charges are displayed at checkout.`
       : `This product is currently out of stock. Please check back later or contact customer support to inquire about availability and restocking dates.`,
   });
 

@@ -53,22 +53,6 @@ export default function RootLayout({ children }) {
     logo: "https://routerkart.in/ROUTERKART_logo2.png",
     description:
       "India's trusted source for refurbished networking gear — GPON routers, fiber tools, security systems and accessories.",
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: "#132, Ramanna Garden, New Mission Road, O T C Road",
-      addressLocality: "Bangalore",
-      addressRegion: "Karnataka",
-      postalCode: "560027",
-      addressCountry: "IN",
-    },
-    contactPoint: [
-      {
-        "@type": "ContactPoint",
-        telephone: "+91-80739-19667",
-        contactType: "customer service",
-        areaServed: "IN",
-      },
-    ],
     email: "admin@routerkart.in",
     sameAs: [],
   };

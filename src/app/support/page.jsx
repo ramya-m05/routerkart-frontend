@@ -15,7 +15,7 @@ const FAQS = [
   },
   {
     q: "How long does delivery take?",
-    a: "Standard delivery takes approximately 2–5 days depending on your location. The estimated delivery date is shown on each product page and your order confirmation email.",
+    a: "Standard delivery takes 3–7 working days depending on your location. The estimated delivery date is shown on each product page and your order confirmation email.",
   },
   {
     q: "Can I cancel my order?",

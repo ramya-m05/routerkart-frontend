@@ -13,7 +13,13 @@ import ProductFaq from "../../../components/ProductFaq";
 
 const getDeliveryDate = (days = 5) => {
   const d = new Date();
-  d.setDate(d.getDate() + Number(days));
+  let remaining = Math.max(1, Number(days) || 5);
+  while (remaining > 0) {
+    d.setDate(d.getDate() + 1);
+    if (d.getDay() !== 0) {
+      remaining--;
+    }
+  }
   return d.toLocaleDateString("en-IN", {
     weekday: "long",
     day: "numeric",
@@ -1409,10 +1415,10 @@ export default function ProductDetails({
                   margin: "0 0 2px",
                 }}
               >
-                🚚 {product.price > 499 ? "Free delivery" : "Estimated delivery"} by {getDeliveryDate(product.deliveryDays || 5)}
+                🚚 Estimated delivery by {getDeliveryDate(product.deliveryDays || 5)}
               </p>
               <p style={{ fontSize: "12px", color: "#60a5fa", margin: 0 }}>
-                {product.deliveryDays ? `approximately ${product.deliveryDays} days` : "approximately 2–5 days"} · {product.price > 499 ? "Free delivery on orders over ₹499" : "Free delivery available on orders over ₹499"}
+                {product.deliveryDays ? `approximately ${product.deliveryDays} working days` : "approximately 3–7 working days"} · Shipping charges are displayed at checkout
               </p>
             </div>
 
@@ -1662,7 +1668,7 @@ export default function ProductDetails({
             >
               {(() => {
                 const badges = [
-                  product.price > 499 ? "🚚 Free Delivery" : "🚚 Free Delivery on orders over ₹499",
+                  "🚚 Shipping charges displayed at checkout",
                   "🔒 Secure Payment",
                 ];
                 if (product.returnEligible) {

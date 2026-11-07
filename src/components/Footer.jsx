@@ -208,7 +208,7 @@ export default function Footer() {
           }}
         >
           {[
-            "🚚 Free delivery on orders over ₹499",
+            "🚚 Shipping charges are displayed at checkout",
             "🔒 Secure Razorpay checkout",
             "✅ Genuine products",
             "🔄 Easy returns on eligible items",

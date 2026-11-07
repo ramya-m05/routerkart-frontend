@@ -42,7 +42,7 @@ export default function HomeClient({ initialProducts = [] }) {
         }}
       >
         {[
-          { icon: "🚚", label: "Free Delivery", sub: "Orders over ₹499" },
+          { icon: "🚚", label: "Reliable Shipping", sub: "Charges at checkout" },
           { icon: "🔒", label: "Secure Pay", sub: "100% encrypted" },
           { icon: "💯", label: "Genuine", sub: "Brand verified" },
           { icon: "⚡", label: "Fast Support", sub: "Dedicated help" },

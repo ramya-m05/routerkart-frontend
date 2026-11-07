@@ -183,7 +183,7 @@ function TermsAndConditions() {
           <Section title="Shipping Coverage & Timelines">
             <ul>
               <li>RouterKart ships across India through trusted courier partners.</li>
-              <li>Standard delivery takes <strong>approximately 2–5 days</strong> depending on your location. Delivery estimates are shown on each product page.</li>
+              <li>Standard delivery takes <strong>3–7 working days</strong> depending on your location. Delivery estimates are shown on each product page.</li>
               <li>Remote or rural areas may take additional time.</li>
               <li>Orders placed before 5:00 PM on a working day are typically dispatched the same day or the next morning.</li>
             </ul>
@@ -191,9 +191,9 @@ function TermsAndConditions() {
 
           <Section title="Shipping Charges">
             <ul>
-              <li>Free shipping on all orders above ₹499.</li>
-              <li>A flat delivery charge of ₹49 applies to orders below ₹499.</li>
-              <li>Shipping charges are non-refundable.</li>
+              <li>Shipping charges are displayed at checkout prior to order confirmation.</li>
+              <li>Any applicable delivery charges are clearly shown before you complete payment.</li>
+              <li>Shipping charges, once dispatched, are non-refundable, except where the return or refund is due to an error on our part.</li>
             </ul>
           </Section>
 
